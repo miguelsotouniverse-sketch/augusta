@@ -11,7 +11,8 @@
 <style>
   #gate{position:fixed;inset:0;z-index:9999;background:var(--crema);display:flex;align-items:center;justify-content:center;padding:24px}
   #gate .card{max-width:380px;width:100%;text-align:center;padding:42px 34px;border:1px solid var(--line,#E3DED9);border-radius:18px;background:#fff;box-shadow:0 10px 40px rgba(3,7,7,.06)}
-  #gate .mono{width:52px;height:52px;border:1px solid var(--negro);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;margin:0 auto 18px}
+  #gate .marca{display:block;width:200px;max-width:70%;height:auto;margin:0 auto 22px}
+  #gate .rule{width:36px;height:1px;background:var(--taupe);margin:0 auto 18px}
   #gate h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:30px;line-height:1.05;margin:0}
   #gate .sub{font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.18em;text-transform:uppercase;font-size:10px;color:var(--taupe);margin-top:6px}
   #gate .msg{font-family:'Jost',sans-serif;font-weight:300;font-size:13.5px;color:var(--ink-soft,#6B6259);margin:20px 0 22px;line-height:1.5}
@@ -33,7 +34,9 @@
   header{border-bottom:1px solid var(--line);padding:22px 0;position:sticky;top:0;background:rgba(244,242,241,.92);backdrop-filter:blur(8px);z-index:20}
   .head-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:14px}
-  .mono{width:38px;height:38px;border:1px solid var(--negro);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:18px;letter-spacing:1px}
+  .brand .marca{display:block;height:46px;width:auto}
+  .brand .sep{width:1px;height:34px;background:var(--line)}
+  @media(max-width:520px){.brand .marca{height:36px}.brand .sep{height:28px}}
   .brand h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:21px;line-height:1}
   .brand .sub{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-soft);margin-top:3px}
   .tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -125,7 +128,8 @@
 <body>
 <div id="gate">
   <div class="card">
-    <div class="mono">MS</div>
+    <img class="marca" src="https://consulta.miguelsotomd.com/ms-vertical.png" alt="Dr. Miguel Soto · Cirujano plástico certificado">
+    <div class="rule"></div>
     <h1>Augusta</h1>
     <div class="sub">Dirección general · MS Universe</div>
     <p class="msg">Vigilancia de la operación: dinero y agenda. Acceso exclusivo para la dirección.</p>
@@ -140,7 +144,8 @@
 </div>
 <header><div class="wrap head-row">
   <div class="brand">
-    <div class="mono">MS</div>
+    <img class="marca" src="https://consulta.miguelsotomd.com/ms-horizontal.png" alt="Dr. Miguel Soto · Cirujano plástico certificado">
+    <div class="sep"></div>
     <div><h1>Augusta</h1><div class="sub">Dirección general · MS Universe</div></div>
   </div>
   <div class="tabs">
