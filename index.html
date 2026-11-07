@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Augusta · Dr. Miguel Soto Universe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  #gate{position:fixed;inset:0;z-index:9999;background:var(--crema);display:flex;align-items:center;justify-content:center;padding:24px}
+  #gate .card{max-width:380px;width:100%;text-align:center;padding:42px 34px;border:1px solid var(--line,#E3DED9);border-radius:18px;background:#fff;box-shadow:0 10px 40px rgba(3,7,7,.06)}
+  #gate .mono{width:52px;height:52px;border:1px solid var(--negro);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;margin:0 auto 18px}
+  #gate h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:30px;line-height:1.05;margin:0}
+  #gate .sub{font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.18em;text-transform:uppercase;font-size:10px;color:var(--taupe);margin-top:6px}
+  #gate .msg{font-family:'Jost',sans-serif;font-weight:300;font-size:13.5px;color:var(--ink-soft,#6B6259);margin:20px 0 22px;line-height:1.5}
+  #gate .gbtn{display:flex;justify-content:center}
+  #gate .err{font-family:'Jost',sans-serif;font-weight:400;font-size:12.5px;color:#9A5B2E;margin-top:16px;min-height:18px}
+</style>
+<style>
+  :root{
+    --negro:#030707; --taupe:#A19487; --crema:#F4F2F1;
+    --taupe-soft:#C8BEB6; --line:#E3DED9; --paper:#FBFAF9; --ink-soft:#6B6259;
+    --campeon:#2E5D4F; --riesgo:#9A5B2E; --dormido:#8A8178; --nuevo:#5B6E8A; --activo:#A19487;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--crema);color:var(--negro);font-family:'Jost',sans-serif;font-weight:300;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  @media(max-width:520px){.wrap{padding:0 16px}}
+
+  /* header */
+  header{border-bottom:1px solid var(--line);padding:22px 0;position:sticky;top:0;background:rgba(244,242,241,.92);backdrop-filter:blur(8px);z-index:20}
+  .head-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:14px}
+  .mono{width:38px;height:38px;border:1px solid var(--negro);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;font-size:18px;letter-spacing:1px}
+  .brand h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:21px;line-height:1}
+  .brand .sub{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-soft);margin-top:3px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-family:'Jost';font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);background:none;border:none;padding:9px 16px;cursor:pointer;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--negro)}
+  .tab.on{color:var(--negro);border-bottom-color:var(--taupe)}
+  .tab:focus-visible{outline:2px solid var(--taupe);outline-offset:2px}
+  .tab .n{font-variant-numeric:tabular-nums;margin-left:6px;color:var(--riesgo)}
+
+  /* layout */
+  main{padding:30px 0 80px}
+  .view{display:none}.view.on{display:block}
+  .empty{color:var(--taupe);font-family:'Cormorant Garamond',serif;font-size:24px;font-style:italic;padding:60px 0;text-align:center}
+  .hint{font-size:12px;color:var(--ink-soft);letter-spacing:.3px;margin-top:8px}
+
+  /* resumen del negocio */
+  .bizbar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 30px}
+  @media(max-width:820px){.bizbar{grid-template-columns:repeat(2,1fr)}}
+  .biz{background:var(--negro);color:var(--crema);padding:18px 20px}
+  .biz .lab{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--taupe-soft)}
+  .biz .val{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:30px;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1}
+  .biz .val small{font-size:13px;font-family:'Jost';font-weight:300;color:var(--taupe-soft)}
+  .biz.accent{background:var(--taupe)}
+  .biz.alarma{background:var(--riesgo)}
+
+  .sec-lab{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;display:flex;align-items:center;gap:12px}
+  .sec-lab:after{content:'';flex:1;height:1px;background:var(--line)}
+  .block{margin-bottom:34px}
+
+  /* alertas */
+  .seg-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px}
+  .seg-btn{font-family:'Jost';font-size:12px;letter-spacing:.5px;padding:9px 15px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer}
+  .seg-btn:hover{border-color:var(--taupe)}
+  .seg-btn.on{background:var(--negro);color:var(--crema);border-color:var(--negro)}
+  .seg-btn:focus-visible{outline:2px solid var(--taupe);outline-offset:2px}
+  .seg-btn .n{font-variant-numeric:tabular-nums;opacity:.7;margin-left:6px}
+  .react-summary{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;color:var(--negro);margin-bottom:18px}
+  .react-summary b{font-style:normal;font-weight:600}
+
+  .al{display:grid;grid-template-columns:110px 1fr auto;gap:16px;align-items:baseline;padding:14px 6px 14px 16px;border-bottom:1px solid var(--line);border-left:3px solid var(--line);background:var(--paper)}
+  .al+.al{margin-top:0}
+  .al.rojo{border-left-color:var(--riesgo)}
+  .al.ambar{border-left-color:var(--taupe)}
+  .al.info{border-left-color:var(--nuevo)}
+  .al .niv{font-size:10px;letter-spacing:2px;text-transform:uppercase}
+  .al.rojo .niv{color:var(--riesgo)}.al.ambar .niv{color:var(--ink-soft)}.al.info .niv{color:var(--nuevo)}
+  .al .t{font-size:14.5px;font-weight:400;line-height:1.35}
+  .al .d{font-size:13px;color:var(--ink-soft);margin-top:3px;line-height:1.45}
+  .al .f{font-size:11px;letter-spacing:1px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+  @media(max-width:680px){.al{grid-template-columns:1fr}.al .f{white-space:normal}}
+
+  .badge{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid currentColor}
+  .b-ok{color:var(--campeon)}.b-rojo{color:var(--riesgo)}.b-ambar{color:var(--dormido)}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{text-align:left;font-weight:500;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid var(--negro)}
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top}
+  tbody tr:hover{background:var(--paper)}
+  td.nm{font-weight:400;font-variant-numeric:normal}
+  td.r,th.r{text-align:right}
+  td .sm{display:block;font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .tscroll{overflow-x:auto}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:30px}
+  @media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--paper);padding:16px 16px 14px}
+  .kpi .lab{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft)}
+  .kpi .val{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px;margin-top:5px;font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .val small{font-size:13px;font-family:'Jost';font-weight:300;color:var(--ink-soft)}
+
+  /* barras de 14 días */
+  .bars{display:grid;grid-template-columns:repeat(14,1fr);gap:6px;align-items:end;height:150px;border-bottom:1px solid var(--negro);padding-top:10px}
+  .bar{background:var(--taupe-soft);position:relative;min-height:2px}
+  .bar.hoy{background:var(--negro)}
+  .bar:hover{background:var(--taupe)}
+  .bar .tip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--negro);color:var(--crema);font-size:11px;padding:4px 7px;white-space:nowrap;margin-bottom:4px}
+  .bar:hover .tip{display:block}
+  .bar-lab{display:grid;grid-template-columns:repeat(14,1fr);gap:6px;font-size:10px;color:var(--ink-soft);text-align:center;margin-top:6px;font-variant-numeric:tabular-nums}
+
+  .fuentes{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--ink-soft);margin-bottom:22px}
+  .fuentes .ok{color:var(--campeon)}.fuentes .ko{color:var(--riesgo)}
+  .btn-ref{font-family:'Jost';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer}
+  .btn-ref:hover{border-color:var(--taupe);color:var(--negro)}
+
+  .foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:11px;color:var(--taupe);letter-spacing:.5px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="card">
+    <div class="mono">MS</div>
+    <h1>Augusta</h1>
+    <div class="sub">Dirección general · MS Universe</div>
+    <p class="msg">Vigilancia de la operación: dinero y agenda. Acceso exclusivo para la dirección.</p>
+    <div id="g_id_onload"
+         data-client_id="634352012698-b47t3ed3tvd4d1g7l30l68bd6e5s0ri4.apps.googleusercontent.com"
+         data-callback="onGoogleSignIn"
+         data-auto_prompt="false"></div>
+    <div class="gbtn"><div class="g_id_signin" data-type="standard" data-size="large"
+         data-theme="outline" data-text="signin_with" data-shape="pill" data-logo_alignment="left"></div></div>
+    <div class="err" id="gate-err"></div>
+  </div>
+</div>
+<header><div class="wrap head-row">
+  <div class="brand">
+    <div class="mono">MS</div>
+    <div><h1>Augusta</h1><div class="sub">Dirección general · MS Universe</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-view="hoy">Hoy<span class="n" id="tab-n"></span></button>
+    <button class="tab" data-view="dinero">Dinero</button>
+    <button class="tab" data-view="agenda">Agenda</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div class="bizbar" id="bizbar" style="display:none">
+    <div class="biz alarma" id="biz-rojas-box"><div class="lab">Críticas</div><div class="val" id="biz-rojas">—</div></div>
+    <div class="biz accent"><div class="lab">Cobrado ayer</div><div class="val" id="biz-ayer">—</div></div>
+    <div class="biz"><div class="lab">Cobrado hoy</div><div class="val" id="biz-hoy">—</div></div>
+    <div class="biz"><div class="lab">Cirugías · 7 días</div><div class="val" id="biz-cx">—</div></div>
+  </div>
+
+  <!-- HOY -->
+  <section class="view on" id="v-hoy">
+    <div class="fuentes" id="fuentes"></div>
+    <div class="seg-bar" id="segbar"></div>
+    <div class="react-summary" id="rsum"></div>
+    <div id="alertas"><div class="empty">Cargando…</div></div>
+  </section>
+
+  <!-- DINERO -->
+  <section class="view" id="v-dinero">
+    <div class="kpis" id="d-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Cobrado por día · últimos 14 días</div>
+      <div class="bars" id="bars"></div>
+      <div class="bar-lab" id="bar-lab"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Hoy por método y cuenta</div>
+      <div class="tscroll"><table><thead><tr><th>Método · cuenta</th><th class="r">Monto</th></tr></thead><tbody id="t-hoy"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Últimos cobros del Registro Sellado</div>
+      <div class="tscroll"><table><thead><tr><th>Folio</th><th>Paciente</th><th>Concepto</th><th>Método</th><th class="r">Monto</th></tr></thead><tbody id="t-ult"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="view" id="v-agenda">
+    <div class="block">
+      <div class="sec-lab">Cirugías y procedimientos · próximos 7 días</div>
+      <div class="tscroll"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Procedimiento</th><th>Anticipo</th><th class="r">Saldo</th><th>Estado</th></tr></thead><tbody id="t-cx"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Operadas sin primera cita postoperatoria</div>
+      <div id="t-post"></div>
+    </div>
+  </section>
+
+  <div class="foot" id="foot"></div>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbyziko8-TN1qKgA-2bq5hwPVdT65BM9nmdPtnNPeljqWuRYwTYWVODW6bMK9hfdWYG6/exec";
+let DATA = null, ID_TOKEN = "", filtro = 'todas';
+const mxn = n => '$'+Math.round(n||0).toLocaleString('es-MX');
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
+const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
+const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema'};
+
+/* ---- tabs ---- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById('v-'+t.dataset.view).classList.add('on');
+});
+
+/* ---- HOY: alertas ---- */
+function renderAlertas(){
+  const A=DATA.alertas;
+  const grupos=[['todas','Todas',A.length],['rojo','Críticas',A.filter(a=>a.nivel==='rojo').length],
+    ['ambar','Por revisar',A.filter(a=>a.nivel==='ambar').length],['info','Para el día',A.filter(a=>a.nivel==='info').length],
+    ['dinero','Dinero',A.filter(a=>a.modulo==='dinero').length],['agenda','Agenda',A.filter(a=>a.modulo==='agenda').length]];
+  const sb=document.getElementById('segbar'); sb.innerHTML='';
+  grupos.forEach(([k,lab,n])=>{
+    const b=document.createElement('button');
+    b.className='seg-btn'+(k===filtro?' on':'');
+    b.innerHTML=`${lab}<span class="n">${n}</span>`;
+    b.onclick=()=>{filtro=k;renderAlertas()};
+    sb.appendChild(b);
+  });
+  const L=A.filter(a=>filtro==='todas'||a.nivel===filtro||a.modulo===filtro);
+  const r=DATA.resumen;
+  document.getElementById('rsum').innerHTML = r.rojas
+    ? `<b>${r.rojas}</b> ${r.rojas===1?'asunto crítico':'asuntos críticos'} y <b>${r.ambar}</b> por revisar. Empieza por arriba.`
+    : (r.ambar ? `Sin críticas. <b>${r.ambar}</b> ${r.ambar===1?'asunto':'asuntos'} por revisar.` : 'Todo en orden. Nada requiere tu atención.');
+  document.getElementById('alertas').innerHTML = L.length ? L.map(a=>`
+    <div class="al ${a.nivel}">
+      <div><div class="niv">${NIVEL[a.nivel]}</div><div class="f">${MOD[a.modulo]||''}</div></div>
+      <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div></div>
+      <div class="f">${fc(a.fecha)}</div>
+    </div>`).join('') : '<div class="empty">Nada en esta vista</div>';
+}
+
+/* ---- DINERO ---- */
+function renderDinero(){
+  const d=DATA.dinero;
+  const varPct = d.promedioMismoDia ? Math.round((d.cobradoAyer/d.promedioMismoDia-1)*100) : null;
+  const ef = d.efectivoHoy.reduce((s,x)=>s+x.monto,0);
+  document.getElementById('d-kpis').innerHTML=`
+    <div class="kpi"><div class="lab">Cobrado ayer</div><div class="val">${mxn(d.cobradoAyer)}${varPct!==null?`<br><small>${varPct>=0?'+':''}${varPct}% vs. habitual</small>`:''}</div></div>
+    <div class="kpi"><div class="lab">Cobrado hoy</div><div class="val">${mxn(d.cobradoHoy)}</div></div>
+    <div class="kpi"><div class="lab">Últimos 7 días</div><div class="val">${mxn(d.cobradoSemana)}</div></div>
+    <div class="kpi"><div class="lab">Efectivo hoy</div><div class="val">${mxn(ef)}<br><small>para el corte</small></div></div>`;
+  const max=Math.max(1,...d.dias.map(x=>x.monto));
+  document.getElementById('bars').innerHTML=d.dias.map((x,i)=>`
+    <div class="bar${i===d.dias.length-1?' hoy':''}" style="height:${Math.max(1.5,x.monto/max*100)}%"><span class="tip">${fc(x.dia)} · ${mxn(x.monto)}</span></div>`).join('');
+  document.getElementById('bar-lab').innerHTML=d.dias.map(x=>`<span>${Number(x.dia.slice(8))}</span>`).join('');
+  document.getElementById('t-hoy').innerHTML = d.hoyPorCuenta.length
+    ? d.hoyPorCuenta.map(x=>`<tr><td class="nm">${esc(x.cuenta)}</td><td class="r">${mxn(x.monto)}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="hint">Sin cobros registrados hoy todavía.</td></tr>';
+  document.getElementById('t-ult').innerHTML=d.ultimos.map(x=>`
+    <tr><td>${esc(x.folio)}<span class="sm">${fc(x.dia)} ${esc(x.hora)}</span></td>
+    <td class="nm">${esc(x.paciente)}<span class="sm">${esc(x.capturo)}</span></td>
+    <td>${esc(x.concepto)}<span class="sm">${esc(x.linea)}</span></td>
+    <td>${esc(x.metodo)}<span class="sm">${esc(x.cuenta)}</span></td>
+    <td class="r">${mxn(x.monto)}</td></tr>`).join('');
+}
+
+/* ---- AGENDA ---- */
+function renderAgenda(){
+  const a=DATA.agenda;
+  const est={ok:['b-ok','En orden'],rojo:['b-rojo','Crítico'],ambar:['b-ambar','Revisar']};
+  document.getElementById('t-cx').innerHTML = a.proximas.length ? a.proximas.map(x=>{
+    const e=est[x.estado]||est.ok;
+    return `<tr><td>${fc(x.dia)}<span class="sm">${esc(x.hora)}${x.sede?' · '+esc(x.sede):''}</span></td>
+      <td class="nm">${esc(x.paciente)}<span class="sm">${x.medico?esc(x.medico):''}</span></td>
+      <td>${esc(x.procedimiento)}<span class="sm">${esc(x.cot||'')}${x.confirmada?' · confirmada':' · sin confirmar'}</span></td>
+      <td>${esc(x.anticipo||'—')}</td>
+      <td class="r">${x.saldo!=null?mxn(x.saldo):'—'}${x.lista?`<span class="sm">de ${mxn(x.lista)}</span>`:''}</td>
+      <td><span class="badge ${e[0]}">${e[1]}</span></td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="hint">Sin cirugías ni procedimientos en los próximos 7 días.</td></tr>';
+  document.getElementById('t-post').innerHTML = a.sinPostop.length
+    ? '<table><tbody>'+a.sinPostop.map(x=>`<tr><td>${fc(x.dia)}</td><td class="nm">${esc(x.paciente)}</td><td>${esc(x.procedimiento)}</td></tr>`).join('')+'</tbody></table>'
+    : '<div class="hint">Todas las operadas de las últimas dos semanas tienen cita postoperatoria.</div>';
+}
+
+/* ---- carga ---- */
+function pintar(json){
+  if(json.error){
+    if(json.error==='no_autorizado'){
+      document.getElementById('gate').style.display='flex';
+      document.getElementById('gate-err').textContent='La cuenta '+(json.quien||'')+' no tiene acceso a Augusta.';
+      return;
+    }
+    document.getElementById('alertas').innerHTML='<div class="empty">No se pudo cargar: '+esc(json.error)+'</div>';
+    return;
+  }
+  DATA=json;
+  const r=DATA.resumen;
+  document.getElementById('biz-rojas').textContent=r.rojas;
+  document.getElementById('biz-rojas-box').className='biz '+(r.rojas?'alarma':'');
+  document.getElementById('biz-ayer').textContent=mxn(r.cobradoAyer);
+  document.getElementById('biz-hoy').textContent=mxn(r.cobradoHoy);
+  document.getElementById('biz-cx').textContent=r.cirugiasProximas;
+  document.getElementById('bizbar').style.display='grid';
+  document.getElementById('tab-n').textContent=r.rojas?r.rojas:'';
+  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta'};
+  document.getElementById('fuentes').innerHTML=Object.keys(F).map(k=>{
+    const f=DATA.fuentes[k]||{}; return `<span class="${f.ok?'ok':'ko'}">${f.ok?'●':'○'} ${F[k]}</span>`;
+  }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
+  document.getElementById('btn-ref').onclick=()=>cargar(true);
+  renderAlertas(); renderDinero(); renderAgenda();
+  document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
+}
+
+function cargar(refrescar){
+  document.getElementById('alertas').innerHTML='<div class="empty">'+(refrescar?'Revisando todo de nuevo…':'Cargando…')+'</div>';
+  if(API_URL.indexOf('__PEGAR')===0){
+    document.getElementById('alertas').innerHTML='<div class="empty">Falta la URL del API.</div>'; return;
+  }
+  window.__augustacb = function(json){ try{ pintar(json); }catch(e){
+    document.getElementById('alertas').innerHTML='<div class="empty">Error al procesar los datos.</div>'; } };
+  const s=document.createElement('script');
+  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&callback=__augustacb'+(refrescar?'&refrescar=1':'')+'&t='+Date.now();
+  s.onerror=()=>{ document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div>'; };
+  document.head.appendChild(s);
+}
+
+window.onGoogleSignIn = function(resp){
+  ID_TOKEN = (resp && resp.credential) ? resp.credential : "";
+  if(!ID_TOKEN){ document.getElementById('gate-err').textContent='No se recibió el token de Google. Reintenta.'; return; }
+  document.getElementById('gate-err').textContent='';
+  document.getElementById('gate').style.display='none';
+  cargar(false);
+};
+</script>
+</body>
+</html>
