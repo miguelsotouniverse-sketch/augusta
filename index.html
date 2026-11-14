@@ -121,6 +121,38 @@
   .btn-ref{font-family:'Jost';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer}
   .btn-ref:hover{border-color:var(--taupe);color:var(--negro)}
 
+  /* requiere su decisión */
+  .dec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .dec-head h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:28px;line-height:1}
+  .dec-head .n{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft)}
+  .decs{display:grid;gap:10px;margin-bottom:36px}
+  .dec{background:#fff;border:1px solid var(--line);border-left:3px solid var(--taupe);padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:10px 20px;align-items:start}
+  .dec.no_cuadra{border-left-color:var(--riesgo)}
+  .dec.cuadra{border-left-color:var(--campeon)}
+  .dec .mod{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft)}
+  .dec .t{font-size:15px;font-weight:400;margin-top:3px;line-height:1.35}
+  .dec .d{font-size:13px;color:var(--ink-soft);margin-top:3px;line-height:1.45}
+  .dec .mot{margin-top:8px;font-size:12.5px;line-height:1.5}
+  .dec .mot div{padding-left:14px;position:relative}
+  .dec .mot div:before{content:'·';position:absolute;left:4px}
+  .dec .monto{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+  .dec .monto small{display:block;font-family:'Jost';font-weight:300;font-size:11px;color:var(--ink-soft);margin-top:4px}
+  .dec .acc{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+  .ver{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid currentColor;margin-top:8px}
+  .ver.cuadra{color:var(--campeon)}.ver.no_cuadra{color:var(--riesgo)}.ver.revisar{color:var(--dormido)}
+  .btn{font-family:'Jost';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;border:1px solid var(--negro);background:var(--negro);color:var(--crema);cursor:pointer;text-decoration:none;display:inline-block}
+  .btn:hover{background:#1d2222}
+  .btn.sec{background:var(--paper);color:var(--negro);border-color:var(--line)}
+  .btn.sec:hover{border-color:var(--taupe)}
+  .btn.conf{background:var(--campeon);border-color:var(--campeon)}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .sel{font-family:'Jost';font-size:13px;padding:9px 10px;border:1px solid var(--line);background:#fff;color:var(--negro);max-width:100%}
+  .sel.falta{border-color:var(--riesgo)}
+  .dec-ok{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--campeon);padding:18px 0 30px}
+  @media(max-width:680px){.dec{grid-template-columns:1fr}.dec .monto{text-align:left}}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--negro);color:var(--crema);font-size:13px;padding:12px 18px;z-index:10000;display:none;max-width:90vw}
+  .toast.err{background:var(--riesgo)}
+
   .foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:11px;color:var(--taupe);letter-spacing:.5px}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -132,7 +164,7 @@
     <div class="rule"></div>
     <h1>Augusta</h1>
     <div class="sub">Dirección general · MS Universe</div>
-    <p class="msg">Vigilancia de la operación: dinero y agenda. Acceso exclusivo para la dirección.</p>
+    <p class="msg">Vigilancia de toda la operación de MS Universe. Acceso exclusivo para la dirección.</p>
     <div id="g_id_onload"
          data-client_id="634352012698-b47t3ed3tvd4d1g7l30l68bd6e5s0ri4.apps.googleusercontent.com"
          data-callback="onGoogleSignIn"
@@ -150,6 +182,8 @@
   </div>
   <div class="tabs">
     <button class="tab on" data-view="hoy">Hoy<span class="n" id="tab-n"></span></button>
+    <button class="tab" data-view="anestesia">Anestesia</button>
+    <button class="tab" data-view="caja">Caja Zorvix</button>
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
   </div>
@@ -157,18 +191,56 @@
 
 <main class="wrap">
   <div class="bizbar" id="bizbar" style="display:none">
+    <div class="biz accent"><div class="lab">Por decidir</div><div class="val" id="biz-dec">—</div></div>
     <div class="biz alarma" id="biz-rojas-box"><div class="lab">Críticas</div><div class="val" id="biz-rojas">—</div></div>
-    <div class="biz accent"><div class="lab">Cobrado ayer</div><div class="val" id="biz-ayer">—</div></div>
-    <div class="biz"><div class="lab">Cobrado hoy</div><div class="val" id="biz-hoy">—</div></div>
+    <div class="biz"><div class="lab">Cobrado ayer</div><div class="val" id="biz-ayer">—</div></div>
     <div class="biz"><div class="lab">Cirugías · 7 días</div><div class="val" id="biz-cx">—</div></div>
   </div>
 
   <!-- HOY -->
   <section class="view on" id="v-hoy">
+    <div id="decisiones"></div>
+    <div class="sec-lab">Vigilancia</div>
     <div class="fuentes" id="fuentes"></div>
     <div class="seg-bar" id="segbar"></div>
     <div class="react-summary" id="rsum"></div>
     <div id="alertas"><div class="empty">Cargando…</div></div>
+  </section>
+
+  <!-- ANESTESIA -->
+  <section class="view" id="v-anestesia">
+    <div class="kpis" id="a-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Alertas de anestesia</div>
+      <div id="a-alertas"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Casos activos · conciliados contra el tabulador</div>
+      <div class="tscroll"><table><thead><tr><th>Cirugía</th><th>Paciente</th><th>Procedimientos</th><th>Estado</th><th class="r">Pide</th><th class="r">Tabulador</th><th>Augusta</th></tr></thead><tbody id="a-casos"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Facturas y pagos</div>
+      <div class="tscroll"><table><thead><tr><th>Solicitud</th><th>Anestesiólogo</th><th>Paga</th><th class="r">Casos</th><th class="r">Factura</th><th>Estado</th></tr></thead><tbody id="a-sols"></tbody></table></div>
+      <div class="hint" id="a-link"></div>
+    </div>
+  </section>
+
+  <!-- CAJA ZORVIX -->
+  <section class="view" id="v-caja">
+    <div class="kpis" id="c-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Alertas de efectivo y caja chica</div>
+      <div id="c-alertas"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Efectivo cobrado a pacientes sin corte</div>
+      <div id="c-efe"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Últimos movimientos de la caja chica</div>
+      <div class="tscroll"><table><thead><tr><th>Folio</th><th>Fecha</th><th>Concepto</th><th>Estado</th><th class="r">Monto</th></tr></thead><tbody id="c-movs"></tbody></table></div>
+      <div class="hint" id="c-link"></div>
+    </div>
   </section>
 
   <!-- DINERO -->
@@ -203,6 +275,7 @@
 
   <div class="foot" id="foot"></div>
 </main>
+<div class="toast" id="toast"></div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyziko8-TN1qKgA-2bq5hwPVdT65BM9nmdPtnNPeljqWuRYwTYWVODW6bMK9hfdWYG6/exec";
@@ -213,7 +286,137 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix'};
+// App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
+// Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
+const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
+const VER={cuadra:'Cuadra',no_cuadra:'No cuadra',revisar:'Revisar'};
+const EST={Programado:'Programado',Por_confirmar:'Esperando al anestesiólogo',Por_aprobar:'Por aprobar',Aprobado:'Aprobado · sin factura',En_cobro:'Facturado · por pagar',Pagado:'Pagado',Por_pagar:'Por pagar',Pagada:'Pagada',Rechazada:'Rechazada',PENDIENTE:'Por firmar',OBSERVADO:'Observado',APROBADO:'Aprobado',ANULADO:'Anulado'};
+
+function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',err?7000:3000);}
+
+async function aneApi(accion,datos){
+  const r=await fetch(ANE_API,{method:'POST',credentials:'omit',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({idToken:ID_TOKEN,accion,datos:datos||{}})});
+  const j=await r.json();
+  if(!j.ok) throw new Error(j.error||'La app de anestesia no aceptó la operación');
+  return j.data;
+}
+
+/* ---- REQUIERE SU DECISIÓN ---- */
+function opcionesPagador(sel){
+  const ps=(DATA.anestesia&&DATA.anestesia.pagadores)||[];
+  return '<option value="">¿Quién paga?</option>'+ps.map(p=>`<option value="${esc(p.id)}" ${p.id===sel?'selected':''}>${esc(p.nombre)}</option>`).join('');
+}
+function renderDecisiones(){
+  const D=DATA.decisiones||[];
+  const el=document.getElementById('decisiones');
+  if(!D.length){ el.innerHTML='<div class="dec-head"><h2>Requiere su decisión</h2></div><div class="dec-ok">Nada espera su decisión. Augusta sigue vigilando.</div>'; return; }
+  el.innerHTML=`<div class="dec-head"><h2>Requiere su decisión</h2><span class="n">${D.length} ${D.length===1?'asunto':'asuntos'}</span></div><div class="decs">`+D.map((d,i)=>{
+    const mot=(d.motivos||[]).length?`<div class="mot">${d.motivos.map(m=>`<div>${esc(m)}</div>`).join('')}</div>`:'';
+    const ver=d.veredicto?`<span class="ver ${d.veredicto}">${VER[d.veredicto]}</span>`:'';
+    const sub=d.tipo==='aprobar'?(Math.abs((d.esperado||0)-(d.monto||0))>1?`<small>tabulador ${mxn(d.esperado)}</small>`:'<small>igual al tabulador</small>'):'';
+    let acc='';
+    if(d.tipo==='aprobar'){
+      acc=`${!d.pagador?`<select class="sel falta" id="pag-${i}">${opcionesPagador('')}</select>`:''}
+        <button class="btn" data-i="${i}" data-acc="aprobar">Aprobar ${mxn(d.monto)}</button>
+        <a class="btn sec" href="${esc(d.enlace)}" target="_blank" rel="noopener">Ver el caso</a>`;
+    } else if(d.tipo==='pagador'){
+      acc=`<select class="sel falta" id="pag-${i}">${opcionesPagador('')}</select>
+        <button class="btn" data-i="${i}" data-acc="pagador">Guardar</button>`;
+    } else {
+      acc=`<a class="btn" href="${esc(d.enlace)}" target="_blank" rel="noopener">${d.tipo==='pagar'?'Ir a pagar':'Revisar y firmar'}</a>
+        <span class="hint" style="margin:0">${d.tipo==='caja'?'La caja de Zorvix tiene su propio acceso: se firma allá.':'El pago se registra en la app con el comprobante.'}</span>`;
+    }
+    return `<div class="dec ${d.veredicto||''}" id="dec-${i}">
+      <div><div class="mod">${MOD[d.modulo]||''}</div><div class="t">${esc(d.titulo)}</div><div class="d">${esc(d.detalle)}</div>
+        ${d.desglose?`<div class="d">${esc(d.desglose)}</div>`:''}${ver}${mot}</div>
+      <div class="monto">${d.monto?mxn(d.monto):''}${sub}</div>
+      <div class="acc">${acc}</div></div>`;
+  }).join('')+'</div>';
+  el.querySelectorAll('button[data-acc]').forEach(b=>b.onclick=()=>decidir(b));
+}
+async function decidir(b){
+  const i=Number(b.dataset.i), d=DATA.decisiones[i], acc=b.dataset.acc;
+  const sel=document.getElementById('pag-'+i);
+  const pag=sel?sel.value:'';
+  if(sel && !pag){ toast('Elija primero quién paga',true); sel.focus(); return; }
+  if(acc==='aprobar' && !b.dataset.listo){
+    b.dataset.listo='1'; b.classList.add('conf'); b.textContent='Confirmar · '+mxn(d.monto);
+    setTimeout(()=>{ if(b.isConnected && b.dataset.listo){ delete b.dataset.listo; b.classList.remove('conf'); b.textContent='Aprobar '+mxn(d.monto);} },5000);
+    return;
+  }
+  b.disabled=true; b.textContent='Enviando…';
+  try{
+    if(pag) await aneApi('marcar',{id:d.caso,pagador:pag});
+    if(acc==='aprobar') await aneApi('aprobar',{id:d.caso});
+    toast(acc==='aprobar'?'Aprobado en la app de anestesia':'Pagador guardado');
+    const card=document.getElementById('dec-'+i);
+    if(card){ card.style.opacity='.35'; card.querySelector('.acc').innerHTML='<span class="hint" style="margin:0">'+(acc==='aprobar'?'Aprobado ✓':'Guardado ✓')+'</span>'; }
+    setTimeout(()=>cargar(true,true),1200);
+  }catch(e){
+    b.disabled=false; delete b.dataset.listo; b.classList.remove('conf'); b.textContent=acc==='aprobar'?'Aprobar '+mxn(d.monto):'Guardar';
+    toast(e.message,true);
+  }
+}
+
+/* ---- lista de alertas de un módulo ---- */
+function alertasDe(mod){
+  const L=(DATA.alertas||[]).filter(a=>a.modulo===mod);
+  return L.length?L.map(a=>`
+    <div class="al ${a.nivel}">
+      <div><div class="niv">${NIVEL[a.nivel]}</div></div>
+      <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div></div>
+      <div class="f">${fc(a.fecha)}</div>
+    </div>`).join(''):'<div class="hint">Sin alertas.</div>';
+}
+
+/* ---- ANESTESIA ---- */
+function renderAnestesia(){
+  const A=DATA.anestesia;
+  if(!A){ document.getElementById('a-kpis').innerHTML=''; document.getElementById('a-alertas').innerHTML=alertasDe('anestesia'); return; }
+  const k=A.kpis;
+  document.getElementById('a-kpis').innerHTML=`
+    <div class="kpi"><div class="lab">Por aprobar</div><div class="val">${mxn(k.porAprobar.monto)}<br><small>${k.porAprobar.n} caso(s)</small></div></div>
+    <div class="kpi"><div class="lab">Esperando al anestesiólogo</div><div class="val">${k.porConfirmar.n}<br><small>${mxn(k.porConfirmar.monto)} estimado</small></div></div>
+    <div class="kpi"><div class="lab">Aprobado sin factura</div><div class="val">${mxn(k.aprobado.monto)}<br><small>${k.aprobado.n} caso(s)</small></div></div>
+    <div class="kpi"><div class="lab">Pagado este mes</div><div class="val">${mxn(k.pagadoMes)}<br><small>${mxn(k.enCobro.monto)} facturado por pagar</small></div></div>`;
+  document.getElementById('a-alertas').innerHTML=alertasDe('anestesia');
+  const vb=v=>v?`<span class="badge ${v==='cuadra'?'b-ok':(v==='no_cuadra'?'b-rojo':'b-ambar')}">${VER[v]}</span>`:'';
+  document.getElementById('a-casos').innerHTML=A.casos.length?A.casos.map(c=>`<tr>
+    <td>${fc(c.dia)}<span class="sm">${esc(c.sede||'—')}</span></td>
+    <td class="nm">${esc(c.paciente)}<span class="sm">${esc(c.pagadorNombre||'¿quién paga?')}</span></td>
+    <td>${esc(c.procedimientos.join(', ')||c.agenda)}<span class="sm">${esc(c.desglose)}</span></td>
+    <td>${esc(EST[c.estado]||c.estado)}</td>
+    <td class="r">${mxn(c.total)}</td><td class="r">${mxn(c.esperado)}</td>
+    <td>${vb(c.veredicto)}${c.motivos.length?`<span class="sm">${esc(c.motivos.join(' '))}</span>`:''}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="hint">Sin casos activos.</td></tr>';
+  document.getElementById('a-sols').innerHTML=A.solicitudes.length?A.solicitudes.map(s=>`<tr>
+    <td>${esc(s.id)}<span class="sm">${fc(s.creada)}</span></td><td class="nm">${esc(s.anestesiologo)}</td><td>${esc(s.pagador)}</td>
+    <td class="r">${mxn(s.totalCasos)}</td><td class="r">${mxn(s.totalCFDI)}</td>
+    <td>${esc(EST[s.estado]||s.estado)}${s.problemas.length?`<span class="sm" style="color:var(--riesgo)">${esc(s.problemas.join(' '))}</span>`:''}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="hint">Todavía no hay facturas.</td></tr>';
+  document.getElementById('a-link').innerHTML=`Fuente: <a href="${esc(A.enlace)}" target="_blank" rel="noopener" style="color:inherit">${esc(A.enlace.replace('https://',''))}</a>`;
+}
+
+/* ---- CAJA ZORVIX ---- */
+function renderCaja(){
+  const C=DATA.caja||{};
+  const E=C.efectivo||{sinCorte:[],sinConciliar:{n:0,monto:0},efectivoMes:0};
+  const arq=C.ultimoArqueo;
+  document.getElementById('c-kpis').innerHTML=C.fondo?`
+    <div class="kpi"><div class="lab">Caja chica · saldo del sistema</div><div class="val">${mxn(C.saldo)}<br><small>de ${mxn(C.fondo.montoFijo)} · ${esc(C.fondo.custodio||'')}</small></div></div>
+    <div class="kpi"><div class="lab">Gastado este mes</div><div class="val">${mxn(C.gastadoMes)}<br><small>${mxn(C.enRevision)} por firmar</small></div></div>
+    <div class="kpi"><div class="lab">Último arqueo</div><div class="val">${arq?fc(arq.dia):'Nunca'}<br><small>${arq?(Math.abs(arq.diferencia)>=1?'diferencia '+mxn(arq.diferencia):'cuadró'):'nadie ha contado la caja'}</small></div></div>
+    <div class="kpi"><div class="lab">Efectivo de pacientes · mes</div><div class="val">${mxn(E.efectivoMes)}<br><small>${E.sinCorte.length} cobro(s) sin corte</small></div></div>`:'';
+  document.getElementById('c-alertas').innerHTML=alertasDe('caja');
+  document.getElementById('c-efe').innerHTML=E.sinCorte.length?'<div class="tscroll"><table><tbody>'+E.sinCorte.map(x=>`<tr><td>${fc(x.dia)}</td><td class="nm">${esc(x.paciente)}</td><td>${esc(x.registro)}</td><td class="r">${mxn(x.monto)}</td></tr>`).join('')+'</tbody></table></div>'
+    :'<div class="hint">Todo el efectivo cobrado está en un corte.</div>';
+  document.getElementById('c-movs').innerHTML=(C.ultimos||[]).map(m=>`<tr>
+    <td>${esc(m.folio)}<span class="sm">${esc(m.quien)}</span></td><td>${fc(m.dia)}</td>
+    <td class="nm">${esc(m.proveedor)}<span class="sm">${esc(m.categoria||m.tipo)}${m.alertas?' · ⚑ '+esc(m.alertas):''}</span></td>
+    <td>${esc(EST[m.estado]||m.estado)}</td><td class="r" style="${m.efecto>0?'color:var(--campeon)':''}">${m.efecto>0?'+':'−'}${mxn(Math.abs(m.efecto))}</td></tr>`).join('')||'<tr><td colspan="5" class="hint">Sin movimientos.</td></tr>';
+  document.getElementById('c-link').innerHTML=C.enlace?`Fuente: <a href="${esc(C.enlace)}" target="_blank" rel="noopener" style="color:inherit">Zorvix · Caja</a> y cobros de Zorvix`:'';
+}
 
 /* ---- tabs ---- */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
@@ -228,7 +431,8 @@ function renderAlertas(){
   const A=DATA.alertas;
   const grupos=[['todas','Todas',A.length],['rojo','Críticas',A.filter(a=>a.nivel==='rojo').length],
     ['ambar','Por revisar',A.filter(a=>a.nivel==='ambar').length],['info','Para el día',A.filter(a=>a.nivel==='info').length],
-    ['dinero','Dinero',A.filter(a=>a.modulo==='dinero').length],['agenda','Agenda',A.filter(a=>a.modulo==='agenda').length]];
+    ['dinero','Dinero',A.filter(a=>a.modulo==='dinero').length],['agenda','Agenda',A.filter(a=>a.modulo==='agenda').length],
+    ['anestesia','Anestesia',A.filter(a=>a.modulo==='anestesia').length],['caja','Caja Zorvix',A.filter(a=>a.modulo==='caja').length]];
   const sb=document.getElementById('segbar'); sb.innerHTML='';
   grupos.forEach(([k,lab,n])=>{
     const b=document.createElement('button');
@@ -306,24 +510,24 @@ function pintar(json){
   }
   DATA=json;
   const r=DATA.resumen;
+  document.getElementById('biz-dec').textContent=(DATA.decisiones||[]).length;
   document.getElementById('biz-rojas').textContent=r.rojas;
   document.getElementById('biz-rojas-box').className='biz '+(r.rojas?'alarma':'');
   document.getElementById('biz-ayer').textContent=mxn(r.cobradoAyer);
-  document.getElementById('biz-hoy').textContent=mxn(r.cobradoHoy);
   document.getElementById('biz-cx').textContent=r.cirugiasProximas;
   document.getElementById('bizbar').style.display='grid';
-  document.getElementById('tab-n').textContent=r.rojas?r.rojas:'';
-  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta'};
+  document.getElementById('tab-n').textContent=(DATA.decisiones||[]).length||'';
+  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta',anestesia:'Honorarios de anestesia',caja:'Caja chica Zorvix',zorvix:'Cobros Zorvix'};
   document.getElementById('fuentes').innerHTML=Object.keys(F).map(k=>{
     const f=DATA.fuentes[k]||{}; return `<span class="${f.ok?'ok':'ko'}">${f.ok?'●':'○'} ${F[k]}</span>`;
   }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
   document.getElementById('btn-ref').onclick=()=>cargar(true);
-  renderAlertas(); renderDinero(); renderAgenda();
+  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderDinero(); renderAgenda();
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
 }
 
-function cargar(refrescar){
-  document.getElementById('alertas').innerHTML='<div class="empty">'+(refrescar?'Revisando todo de nuevo…':'Cargando…')+'</div>';
+function cargar(refrescar,silencioso){
+  if(!silencioso) document.getElementById('alertas').innerHTML='<div class="empty">'+(refrescar?'Revisando todo de nuevo…':'Cargando…')+'</div>';
   if(API_URL.indexOf('__PEGAR')===0){
     document.getElementById('alertas').innerHTML='<div class="empty">Falta la URL del API.</div>'; return;
   }
