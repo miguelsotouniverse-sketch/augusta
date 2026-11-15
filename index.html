@@ -184,6 +184,7 @@
     <button class="tab on" data-view="hoy">Hoy<span class="n" id="tab-n"></span></button>
     <button class="tab" data-view="anestesia">Anestesia</button>
     <button class="tab" data-view="caja">Caja Zorvix</button>
+    <button class="tab" data-view="fotos">Fotos</button>
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
   </div>
@@ -243,6 +244,24 @@
     </div>
   </section>
 
+  <!-- FOTOS -->
+  <section class="view" id="v-fotos">
+    <div class="kpis" id="f-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Asistieron y no tienen fotos</div>
+      <div class="tscroll"><table><thead><tr><th>Cita</th><th>Paciente</th><th>Motivo</th><th>Atendió</th></tr></thead><tbody id="f-faltan"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Por día</div>
+      <div class="tscroll"><table><thead><tr><th>Día</th><th class="r">Revisadas</th><th class="r">Con fotos</th><th class="r">Sin fotos</th><th class="r">Asistencia sin marcar</th></tr></thead><tbody id="f-dias"></tbody></table></div>
+      <div class="hint" id="f-nota"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Con fotos</div>
+      <div class="tscroll"><table><thead><tr><th>Cita</th><th>Paciente</th><th>Carpetas</th></tr></thead><tbody id="f-ok"></tbody></table></div>
+    </div>
+  </section>
+
   <!-- DINERO -->
   <section class="view" id="v-dinero">
     <div class="kpis" id="d-kpis"></div>
@@ -286,7 +305,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos'};
 // App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
 // Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
 const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
@@ -418,6 +437,28 @@ function renderCaja(){
   document.getElementById('c-link').innerHTML=C.enlace?`Fuente: <a href="${esc(C.enlace)}" target="_blank" rel="noopener" style="color:inherit">Zorvix · Caja</a> y cobros de Zorvix`:'';
 }
 
+/* ---- FOTOS ---- */
+function renderFotos(){
+  const F=DATA.fotos;
+  if(!F){ document.getElementById('f-kpis').innerHTML=''; document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">No se pudo revisar.</td></tr>'; return; }
+  const tot=F.dias.reduce((s,d)=>({r:s.r+d.revisadas,c:s.c+d.conFotos,f:s.f+d.faltan,a:s.a+d.sinAsistencia}),{r:0,c:0,f:0,a:0});
+  const pct=tot.r?Math.round(tot.c/tot.r*100):100;
+  document.getElementById('f-kpis').innerHTML=`
+    <div class="kpi"><div class="lab">Cumplimiento</div><div class="val">${pct}%<br><small>${tot.c} de ${tot.r} pacientes</small></div></div>
+    <div class="kpi"><div class="lab">Sin fotos</div><div class="val">${tot.f}<br><small>desde ${fc(F.desde)}</small></div></div>
+    <div class="kpi"><div class="lab">Asistencia sin marcar</div><div class="val">${tot.a}<br><small>no se pueden revisar</small></div></div>
+    <div class="kpi"><div class="lab">Revisado hasta</div><div class="val">${fc(F.hasta)}<br><small>hoy se revisa desde las ${esc(F.revisaHoyDesde)}</small></div></div>`;
+  document.getElementById('f-faltan').innerHTML=F.faltan.length?F.faltan.map(x=>`<tr>
+    <td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar)}</span></td><td class="nm">${esc(x.paciente)}</td>
+    <td>${esc(x.procedimiento||x.motivo)}<span class="sm">${esc(x.motivo)}</span></td><td>${esc(x.atendio||'—')}</td></tr>`).join('')
+    :'<tr><td colspan="4" class="hint">Todas las pacientes que asistieron tienen sus fotos.</td></tr>';
+  document.getElementById('f-dias').innerHTML=F.dias.map(d=>`<tr><td>${fc(d.dia)}</td><td class="r">${d.revisadas}</td><td class="r">${d.conFotos}</td>
+    <td class="r" style="${d.faltan?'color:var(--riesgo)':''}">${d.faltan}</td><td class="r">${d.sinAsistencia}</td></tr>`).join('')||'<tr><td colspan="5" class="hint">Sin citas en el periodo.</td></tr>';
+  document.getElementById('f-nota').textContent='No se fotografían: valoraciones de primera vez y pacientes de la Dra. Carmen Damián. Las fotos subidas hasta '+3+' días después de la cita cuentan.';
+  document.getElementById('f-ok').innerHTML=(F.conFotos||[]).map(x=>`<tr><td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar)}</span></td>
+    <td class="nm">${esc(x.paciente)}</td><td>${esc((x.carpetas||[]).join(' · '))}</td></tr>`).join('')||'<tr><td colspan="3" class="hint">—</td></tr>';
+}
+
 /* ---- tabs ---- */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
@@ -432,7 +473,8 @@ function renderAlertas(){
   const grupos=[['todas','Todas',A.length],['rojo','Críticas',A.filter(a=>a.nivel==='rojo').length],
     ['ambar','Por revisar',A.filter(a=>a.nivel==='ambar').length],['info','Para el día',A.filter(a=>a.nivel==='info').length],
     ['dinero','Dinero',A.filter(a=>a.modulo==='dinero').length],['agenda','Agenda',A.filter(a=>a.modulo==='agenda').length],
-    ['anestesia','Anestesia',A.filter(a=>a.modulo==='anestesia').length],['caja','Caja Zorvix',A.filter(a=>a.modulo==='caja').length]];
+    ['anestesia','Anestesia',A.filter(a=>a.modulo==='anestesia').length],['caja','Caja Zorvix',A.filter(a=>a.modulo==='caja').length],
+    ['fotos','Fotos',A.filter(a=>a.modulo==='fotos').length]];
   const sb=document.getElementById('segbar'); sb.innerHTML='';
   grupos.forEach(([k,lab,n])=>{
     const b=document.createElement('button');
@@ -517,12 +559,12 @@ function pintar(json){
   document.getElementById('biz-cx').textContent=r.cirugiasProximas;
   document.getElementById('bizbar').style.display='grid';
   document.getElementById('tab-n').textContent=(DATA.decisiones||[]).length||'';
-  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta',anestesia:'Honorarios de anestesia',caja:'Caja chica Zorvix',zorvix:'Cobros Zorvix'};
+  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta',anestesia:'Honorarios de anestesia',caja:'Caja chica Zorvix',zorvix:'Cobros Zorvix',fotos:'Fotos clínicas'};
   document.getElementById('fuentes').innerHTML=Object.keys(F).map(k=>{
     const f=DATA.fuentes[k]||{}; return `<span class="${f.ok?'ok':'ko'}">${f.ok?'●':'○'} ${F[k]}</span>`;
   }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
   document.getElementById('btn-ref').onclick=()=>cargar(true);
-  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderDinero(); renderAgenda();
+  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderFotos(); renderDinero(); renderAgenda();
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
 }
 
