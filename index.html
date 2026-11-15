@@ -185,6 +185,7 @@
     <button class="tab" data-view="anestesia">Anestesia</button>
     <button class="tab" data-view="caja">Caja Zorvix</button>
     <button class="tab" data-view="fotos">Fotos</button>
+    <button class="tab" data-view="expediente">Expediente</button>
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
   </div>
@@ -262,6 +263,28 @@
     </div>
   </section>
 
+  <!-- EXPEDIENTE -->
+  <section class="view" id="v-expediente">
+    <div class="kpis" id="e-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Por sede</div>
+      <div class="tscroll"><table><thead><tr><th>Sede</th><th class="r">Revisadas</th><th class="r">Completas</th><th class="r">En plazo</th><th class="r">Incompletas</th><th class="r">Cumplimiento</th></tr></thead><tbody id="e-sedes"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Incompletos · pasó el plazo</div>
+      <div class="tscroll"><table><thead><tr><th>Atención</th><th>Paciente</th><th>Qué falta</th><th>Responsable</th></tr></thead><tbody id="e-mal"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">En plazo · todavía se puede completar</div>
+      <div class="tscroll"><table><thead><tr><th>Atención</th><th>Paciente</th><th>Qué falta</th><th>Vence</th></tr></thead><tbody id="e-plazo"></tbody></table></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Completos</div>
+      <div class="tscroll"><table><thead><tr><th>Atención</th><th>Paciente</th><th>Documentos</th></tr></thead><tbody id="e-ok"></tbody></table></div>
+      <div class="hint" id="e-nota"></div>
+    </div>
+  </section>
+
   <!-- DINERO -->
   <section class="view" id="v-dinero">
     <div class="kpis" id="d-kpis"></div>
@@ -305,7 +328,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente'};
 // App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
 // Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
 const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
@@ -459,6 +482,35 @@ function renderFotos(){
     <td class="nm">${esc(x.paciente)}</td><td>${esc((x.carpetas||[]).join(' · '))}</td></tr>`).join('')||'<tr><td colspan="3" class="hint">—</td></tr>';
 }
 
+/* ---- EXPEDIENTE ---- */
+function renderExpediente(){
+  const E=DATA.expediente;
+  const vacio=(id,n,t)=>document.getElementById(id).innerHTML=`<tr><td colspan="${n}" class="hint">${t}</td></tr>`;
+  if(!E){ document.getElementById('e-kpis').innerHTML=''; vacio('e-mal',4,'No se pudo revisar el expediente.'); return; }
+  const T=E.total, pct=T.revisadas?Math.round(T.completas/T.revisadas*100):100;
+  document.getElementById('e-kpis').innerHTML=`
+    <div class="kpi"><div class="lab">Cumplimiento NOM-004</div><div class="val">${pct}%<br><small>${T.completas} de ${T.revisadas} atenciones</small></div></div>
+    <div class="kpi"><div class="lab">Incompletos</div><div class="val">${T.incompletas}<br><small>pasó el plazo de ${E.plazoDias} días</small></div></div>
+    <div class="kpi"><div class="lab">En plazo</div><div class="val">${T.enPlazo}<br><small>todavía se pueden completar</small></div></div>
+    <div class="kpi"><div class="lab">Periodo</div><div class="val">${fc(E.desde)}<br><small>al ${fc(E.hasta)}</small></div></div>`;
+  document.getElementById('e-sedes').innerHTML=Object.keys(E.sedes).map(k=>{const s=E.sedes[k];const p=s.revisadas?Math.round(s.completas/s.revisadas*100)+'%':'—';
+    return `<tr><td class="nm">${esc(k)}${E.errores&&E.errores[k]?`<span class="sm" style="color:var(--riesgo)">${esc(E.errores[k])}</span>`:''}</td><td class="r">${s.revisadas}</td><td class="r">${s.completas}</td><td class="r">${s.enPlazo}</td>
+    <td class="r" style="${s.incompletas?'color:var(--riesgo)':''}">${s.incompletas}</td><td class="r">${p}</td></tr>`}).join('');
+  const qf=x=>(x.faltan.length?`<b>Falta:</b> ${esc(x.faltan.join(', '))}`:'')+(x.faltan.length&&x.sinImprimir.length?'<br>':'')+
+    (x.sinImprimir.length?`<span style="color:var(--ink-soft)">Sin imprimir: ${esc(x.sinImprimir.join(', '))}</span>`:'');
+  const at=x=>`<td>${fc(x.dia)}<span class="sm">${esc(x.sede)}${x.hora?' · '+esc(x.hora):''}</span><span class="sm">${esc(x.atencion)}</span></td>`;
+  const mal=E.filas.filter(x=>x.estado==='incompleto'), pl=E.filas.filter(x=>x.estado==='en_plazo'), ok=E.filas.filter(x=>x.estado==='completo');
+  if(mal.length) document.getElementById('e-mal').innerHTML=mal.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td style="color:var(--riesgo)">${qf(x)}</td><td>${esc(x.responsable||'—')}</td></tr>`).join('');
+  else vacio('e-mal',4,'Ningún expediente atrasado.');
+  if(pl.length) document.getElementById('e-plazo').innerHTML=pl.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td>${qf(x)}</td><td>${fc(x.vence)}</td></tr>`).join('');
+  else vacio('e-plazo',4,'—');
+  if(ok.length) document.getElementById('e-ok').innerHTML=ok.slice(0,60).map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td>${esc(x.tiene.join(' · '))}</td></tr>`).join('');
+  else vacio('e-ok',3,'—');
+  document.getElementById('e-nota').textContent='Un documento cuenta cuando ya se imprimió su última versión desde la app (la firma es a mano). '+
+    'Las impresiones se registran desde el '+fc(E.impresionDesde)+'; antes de esa fecha sólo se exige que la nota exista. '+
+    'No se revisan las pacientes de la Dra. Carmen Damián en el consultorio.';
+}
+
 /* ---- tabs ---- */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
@@ -474,7 +526,8 @@ function renderAlertas(){
     ['ambar','Por revisar',A.filter(a=>a.nivel==='ambar').length],['info','Para el día',A.filter(a=>a.nivel==='info').length],
     ['dinero','Dinero',A.filter(a=>a.modulo==='dinero').length],['agenda','Agenda',A.filter(a=>a.modulo==='agenda').length],
     ['anestesia','Anestesia',A.filter(a=>a.modulo==='anestesia').length],['caja','Caja Zorvix',A.filter(a=>a.modulo==='caja').length],
-    ['fotos','Fotos',A.filter(a=>a.modulo==='fotos').length]];
+    ['fotos','Fotos',A.filter(a=>a.modulo==='fotos').length],
+    ['expediente','Expediente',A.filter(a=>a.modulo==='expediente').length]];
   const sb=document.getElementById('segbar'); sb.innerHTML='';
   grupos.forEach(([k,lab,n])=>{
     const b=document.createElement('button');
@@ -559,12 +612,12 @@ function pintar(json){
   document.getElementById('biz-cx').textContent=r.cirugiasProximas;
   document.getElementById('bizbar').style.display='grid';
   document.getElementById('tab-n').textContent=(DATA.decisiones||[]).length||'';
-  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta',anestesia:'Honorarios de anestesia',caja:'Caja chica Zorvix',zorvix:'Cobros Zorvix',fotos:'Fotos clínicas'};
+  const F={sellado:'Registro Sellado',cirugias:'Agenda de cirugías',consulta:'Agenda de consulta',anestesia:'Honorarios de anestesia',caja:'Caja chica Zorvix',zorvix:'Cobros Zorvix',fotos:'Fotos clínicas',expediente:'Expediente clínico'};
   document.getElementById('fuentes').innerHTML=Object.keys(F).map(k=>{
     const f=DATA.fuentes[k]||{}; return `<span class="${f.ok?'ok':'ko'}">${f.ok?'●':'○'} ${F[k]}</span>`;
   }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
   document.getElementById('btn-ref').onclick=()=>cargar(true);
-  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderFotos(); renderDinero(); renderAgenda();
+  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
 }
 
