@@ -502,7 +502,7 @@ function renderFotos(){
     :'<tr><td colspan="4" class="hint">Todas las pacientes que asistieron tienen sus fotos.</td></tr>';
   document.getElementById('f-dias').innerHTML=F.dias.map(d=>`<tr><td>${fc(d.dia)}</td><td class="r">${d.revisadas}</td><td class="r">${d.conFotos}</td>
     <td class="r" style="${d.faltan?'color:var(--riesgo)':''}">${d.faltan}</td><td class="r">${d.sinAsistencia}</td></tr>`).join('')||'<tr><td colspan="5" class="hint">Sin citas en el periodo.</td></tr>';
-  document.getElementById('f-nota').textContent='No se fotografían: valoraciones de primera vez y pacientes de la Dra. Carmen Damián. Las fotos subidas hasta '+3+' días después de la cita cuentan.';
+  document.getElementById('f-nota').textContent='No se fotografían: valoraciones de primera vez, depilación y pacientes de la Dra. Carmen Damián. Las fotos subidas hasta '+3+' días después de la cita cuentan.';
   document.getElementById('f-ok').innerHTML=(F.conFotos||[]).map(x=>`<tr><td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar)}</span></td>
     <td class="nm">${esc(x.paciente)}</td><td>${esc((x.carpetas||[]).join(' · '))}</td></tr>`).join('')||'<tr><td colspan="3" class="hint">—</td></tr>';
 }
