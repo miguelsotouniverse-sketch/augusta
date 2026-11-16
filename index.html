@@ -593,7 +593,7 @@ function renderExpediente(){
     return `<tr><td class="nm">${esc(k)}${E.errores&&E.errores[k]?`<span class="sm" style="color:var(--riesgo)">${esc(E.errores[k])}</span>`:''}</td><td class="r">${s.revisadas}</td><td class="r">${s.completas}</td><td class="r">${s.enPlazo}</td>
     <td class="r" style="${s.incompletas?'color:var(--riesgo)':''}">${s.incompletas}</td><td class="r">${p}</td></tr>`}).join('');
   const qf=x=>(x.faltan.length?`<b>Falta:</b> ${esc(x.faltan.join(', '))}`:'')+(x.faltan.length&&x.sinImprimir.length?'<br>':'')+
-    (x.sinImprimir.length?`<span style="color:var(--ink-soft)">Sin imprimir: ${esc(x.sinImprimir.join(', '))}</span>`:'');
+    (x.sinImprimir.length?`<span style="color:var(--ink-soft)">Ya existe en el expediente, falta imprimirla: ${esc(x.sinImprimir.join(', '))}</span>`:'');
   const at=x=>`<td>${fc(x.dia)}<span class="sm">${esc(x.sede)}${x.hora?' · '+esc(x.hora):''}</span><span class="sm">${esc(x.atencion)}</span></td>`;
   const mal=E.filas.filter(x=>x.estado==='incompleto'), pl=E.filas.filter(x=>x.estado==='en_plazo'), ok=E.filas.filter(x=>x.estado==='completo');
   const cl=x=>`<br><button class="corr-link" data-k="${esc(x.clave||'')}">Corregir</button>`;
