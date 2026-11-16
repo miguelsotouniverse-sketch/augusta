@@ -118,6 +118,11 @@
 
   .fuentes{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--ink-soft);margin-bottom:22px}
   .fuentes .ok{color:var(--campeon)}.fuentes .ko{color:var(--riesgo)}
+  .diabar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+  .diabar input[type=date]{font-family:'Jost';font-size:14px;padding:7px 10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+  .diabar .flecha{font-family:'Jost';font-size:16px;line-height:1;padding:7px 12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .diabar .btn-ref.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .diabar .est{font-size:12px;color:var(--ink-soft);letter-spacing:.3px}
   .btn-ref{font-family:'Jost';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer}
   .btn-ref:hover{border-color:var(--taupe);color:var(--negro)}
 
@@ -247,6 +252,14 @@
 
   <!-- FOTOS -->
   <section class="view" id="v-fotos">
+    <div class="diabar" data-barra="fotos">
+      <button class="btn-ref" data-acc="ventana">Últimos días</button>
+      <button class="flecha" data-acc="menos" aria-label="Día anterior">‹</button>
+      <input type="date" data-acc="fecha" aria-label="Elegir día">
+      <button class="flecha" data-acc="mas" aria-label="Día siguiente">›</button>
+      <button class="btn-ref" data-acc="hoy">Hoy</button>
+      <span class="est"></span>
+    </div>
     <div class="kpis" id="f-kpis"></div>
     <div class="block">
       <div class="sec-lab">Asistieron y no tienen fotos</div>
@@ -265,6 +278,14 @@
 
   <!-- EXPEDIENTE -->
   <section class="view" id="v-expediente">
+    <div class="diabar" data-barra="expediente">
+      <button class="btn-ref" data-acc="ventana">Últimos días</button>
+      <button class="flecha" data-acc="menos" aria-label="Día anterior">‹</button>
+      <input type="date" data-acc="fecha" aria-label="Elegir día">
+      <button class="flecha" data-acc="mas" aria-label="Día siguiente">›</button>
+      <button class="btn-ref" data-acc="hoy">Hoy</button>
+      <span class="est"></span>
+    </div>
     <div class="kpis" id="e-kpis"></div>
     <div class="block">
       <div class="sec-lab">Por sede</div>
@@ -322,6 +343,8 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyziko8-TN1qKgA-2bq5hwPVdT65BM9nmdPtnNPeljqWuRYwTYWVODW6bMK9hfdWYG6/exec";
 let DATA = null, ID_TOKEN = "", filtro = 'todas';
+/* Día elegido en Fotos / Expediente. Vacío = la ventana de los últimos días que trae la carga normal. */
+let DIA_SEL = '', DIA_DATA = null, DIA_CARGANDO = false;
 const mxn = n => '$'+Math.round(n||0).toLocaleString('es-MX');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -462,8 +485,10 @@ function renderCaja(){
 
 /* ---- FOTOS ---- */
 function renderFotos(){
-  const F=DATA.fotos;
-  if(!F){ document.getElementById('f-kpis').innerHTML=''; document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">No se pudo revisar.</td></tr>'; return; }
+  const F=DIA_SEL?(DIA_DATA&&DIA_DATA.fotos):DATA.fotos;
+  if(!F){ const t=DIA_CARGANDO?'Revisando '+fc(DIA_SEL)+'…':'No se pudo revisar.';
+    document.getElementById('f-kpis').innerHTML=''; document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">'+t+'</td></tr>';
+    document.getElementById('f-dias').innerHTML=''; document.getElementById('f-ok').innerHTML=''; document.getElementById('f-nota').textContent=''; return; }
   const tot=F.dias.reduce((s,d)=>({r:s.r+d.revisadas,c:s.c+d.conFotos,f:s.f+d.faltan,a:s.a+d.sinAsistencia}),{r:0,c:0,f:0,a:0});
   const pct=tot.r?Math.round(tot.c/tot.r*100):100;
   document.getElementById('f-kpis').innerHTML=`
@@ -484,9 +509,10 @@ function renderFotos(){
 
 /* ---- EXPEDIENTE ---- */
 function renderExpediente(){
-  const E=DATA.expediente;
+  const E=DIA_SEL?(DIA_DATA&&DIA_DATA.expediente):DATA.expediente;
   const vacio=(id,n,t)=>document.getElementById(id).innerHTML=`<tr><td colspan="${n}" class="hint">${t}</td></tr>`;
-  if(!E){ document.getElementById('e-kpis').innerHTML=''; vacio('e-mal',4,'No se pudo revisar el expediente.'); return; }
+  if(!E){ document.getElementById('e-kpis').innerHTML=''; vacio('e-mal',4,DIA_CARGANDO?'Revisando '+fc(DIA_SEL)+'…':'No se pudo revisar el expediente.');
+    ['e-sedes','e-plazo','e-ok'].forEach(id=>document.getElementById(id).innerHTML=''); document.getElementById('e-nota').textContent=''; return; }
   const T=E.total, pct=T.revisadas?Math.round(T.completas/T.revisadas*100):100;
   document.getElementById('e-kpis').innerHTML=`
     <div class="kpi"><div class="lab">Cumplimiento NOM-004</div><div class="val">${pct}%<br><small>${T.completas} de ${T.revisadas} atenciones</small></div></div>
@@ -510,6 +536,48 @@ function renderExpediente(){
     'Las impresiones se registran desde el '+fc(E.impresionDesde)+'; antes de esa fecha sólo se exige que la nota exista. '+
     'No se revisan las pacientes de la Dra. Carmen Damián en el consultorio.';
 }
+
+/* ---- selector de día (Fotos y Expediente) ---- */
+function hoyISO(){ const d=new Date(Date.now()-6*3600e3); return d.toISOString().slice(0,10); }
+function sumaDia(k,n){ const d=new Date(k+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function pintaBarras(){
+  document.querySelectorAll('.diabar').forEach(b=>{
+    b.querySelector('[data-acc=ventana]').classList.toggle('on',!DIA_SEL);
+    const inp=b.querySelector('[data-acc=fecha]'); inp.value=DIA_SEL||''; inp.max=hoyISO();
+    b.querySelector('[data-acc=mas]').disabled=!DIA_SEL||DIA_SEL>=hoyISO();
+    b.querySelector('.est').textContent=DIA_CARGANDO?'Revisando '+fc(DIA_SEL)+'…':
+      (DIA_SEL?(DIA_DATA&&DIA_DATA.errores&&DIA_DATA.errores.length?'Ojo: '+DIA_DATA.errores.join(' · '):'Mostrando sólo el '+fc(DIA_SEL)+'.'):
+      'Mostrando los últimos días.');
+  });
+}
+function eligeDia(dia){
+  if(dia && dia>hoyISO()) dia=hoyISO();
+  DIA_SEL=dia||''; DIA_DATA=null;
+  if(!DIA_SEL){ DIA_CARGANDO=false; pintaBarras(); renderFotos(); renderExpediente(); return; }
+  DIA_CARGANDO=true; pintaBarras();
+  document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">Revisando '+fc(DIA_SEL)+'…</td></tr>';
+  document.getElementById('e-mal').innerHTML='<tr><td colspan="4" class="hint">Revisando '+fc(DIA_SEL)+'…</td></tr>';
+  const pedido=DIA_SEL, cb='__augustadia'+Date.now();
+  window[cb]=function(json){
+    delete window[cb];
+    if(pedido!==DIA_SEL) return;               // el doctor ya eligió otro día
+    DIA_CARGANDO=false;
+    if(!json||json.error){ DIA_DATA={errores:[(json&&json.error)||'sin respuesta']}; }
+    else DIA_DATA=json;
+    pintaBarras(); renderFotos(); renderExpediente();
+  };
+  const s=document.createElement('script');
+  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&dia='+pedido+'&callback='+cb+'&t='+Date.now();
+  s.onerror=()=>{ if(pedido!==DIA_SEL) return; DIA_CARGANDO=false; DIA_DATA={errores:['No se pudo conectar con Augusta']}; pintaBarras(); renderFotos(); renderExpediente(); };
+  document.head.appendChild(s);
+}
+document.querySelectorAll('.diabar').forEach(b=>{
+  b.querySelector('[data-acc=ventana]').onclick=()=>eligeDia('');
+  b.querySelector('[data-acc=hoy]').onclick=()=>eligeDia(hoyISO());
+  b.querySelector('[data-acc=menos]').onclick=()=>eligeDia(sumaDia(DIA_SEL||hoyISO(),-1));
+  b.querySelector('[data-acc=mas]').onclick=()=>{ if(DIA_SEL) eligeDia(sumaDia(DIA_SEL,1)); };
+  b.querySelector('[data-acc=fecha]').onchange=e=>eligeDia(e.target.value);
+});
 
 /* ---- tabs ---- */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
@@ -617,7 +685,7 @@ function pintar(json){
     const f=DATA.fuentes[k]||{}; return `<span class="${f.ok?'ok':'ko'}">${f.ok?'●':'○'} ${F[k]}</span>`;
   }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
   document.getElementById('btn-ref').onclick=()=>cargar(true);
-  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
+  renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); pintaBarras(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
 }
 
