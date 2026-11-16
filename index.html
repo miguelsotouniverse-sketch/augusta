@@ -411,7 +411,7 @@ function renderDecisiones(){
       const op=(l,v)=>l.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('');
       acc=`<div class="cxform" id="cx-f-${i}">
           <label>Paciente<input class="sel" name="paciente" value="${esc(d.paciente)}"></label>
-          <label>Teléfono<input class="sel${d.telefono?'':' falta'}" name="telefono" value="${esc(d.telefono)}" placeholder="10 dígitos"></label>
+          <label>Teléfono<input class="sel${d.telefono?'':' falta'}" name="telefono" value="${esc(d.telefono)}" placeholder="10 dígitos">${d.fuenteTel?`<small style="text-transform:none;letter-spacing:0">Tomado ${esc(d.fuenteTel)}</small>`:'<small style="text-transform:none;letter-spacing:0">No está en su base de pacientes</small>'}</label>
           <label>Cirugía programada<input class="sel" name="procedimiento" value="${esc(d.procedimiento)}"></label>
           <label>Médico que opera<select class="sel" name="medico"><option value="">—</option>${op(d.medicos||[],d.medico)}</select></label>
           <label>Clínica<select class="sel falta" name="sede"><option value="">¿Zorvix o Renasté?</option><option>Zorvix</option><option>Renasté</option></select></label>
