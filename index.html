@@ -411,7 +411,8 @@ function renderDecisiones(){
       const op=(l,v)=>l.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('');
       acc=`<div class="cxform" id="cx-f-${i}">
           <label>Paciente<input class="sel" name="paciente" value="${esc(d.paciente)}"></label>
-          <label>Teléfono<input class="sel${d.telefono?'':' falta'}" name="telefono" value="${esc(d.telefono)}" placeholder="10 dígitos">${d.fuenteTel?`<small style="text-transform:none;letter-spacing:0">Tomado ${esc(d.fuenteTel)}</small>`:'<small style="text-transform:none;letter-spacing:0">No está en su base de pacientes</small>'}</label>
+          <label>Teléfono<input class="sel${d.telefono?'':' falta'}" name="telefono" value="${esc(d.telefono)}" placeholder="10 dígitos">${d.fuenteTel?`<small style="text-transform:none;letter-spacing:0">Tomado ${esc(d.fuenteTel)}</small>`:'<small style="text-transform:none;letter-spacing:0">No aparece en su base ni en las agendas</small>'}
+            <span style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px"><input type="checkbox" name="telDesconocido"> Desconocido</span></label>
           <label>Cirugía programada<input class="sel" name="procedimiento" value="${esc(d.procedimiento)}"></label>
           <label>Médico que opera<select class="sel" name="medico"><option value="">—</option>${op(d.medicos||[],d.medico)}</select></label>
           <label>Clínica<select class="sel falta" name="sede"><option value="">¿Zorvix o Renasté?</option><option>Zorvix</option><option>Renasté</option></select></label>
@@ -474,10 +475,11 @@ async function decidirCx(b){
     Object.assign(q,{sede:d.sede,caso:d.caso,anestesiologo:s.value});
   } else {
     const f=document.getElementById('cx-f-'+i), v=n=>f.querySelector(`[name="${n}"]`).value.trim();
-    const faltan=[['paciente','el nombre'],['telefono','el teléfono'],['procedimiento','la cirugía'],['medico','el médico'],['sede','la clínica']].filter(x=>!v(x[0]));
+    const telDesc=f.querySelector('[name="telDesconocido"]').checked;
+    const faltan=[['paciente','el nombre'],['telefono','el teléfono'],['procedimiento','la cirugía'],['medico','el médico'],['sede','la clínica']].filter(x=>!(x[0]==='telefono'&&telDesc)&&!v(x[0]));
     if(faltan.length){ toast('Falta '+faltan.map(x=>x[1]).join(', '),true); f.querySelector(`[name="${faltan[0][0]}"]`).focus(); return; }
-    if(v('telefono').replace(/\D/g,'').length<10){ toast('El teléfono debe tener 10 dígitos',true); return; }
-    Object.assign(q,{evento:d.evento,paciente:v('paciente'),telefono:v('telefono'),procedimiento:v('procedimiento'),medico:v('medico'),sede:v('sede'),anestesia:v('anestesia')});
+    if(!telDesc&&v('telefono').replace(/\D/g,'').length<10){ toast('El teléfono debe tener 10 dígitos, o márquelo como desconocido',true); return; }
+    Object.assign(q,{evento:d.evento,paciente:v('paciente'),telefono:v('telefono'),procedimiento:v('procedimiento'),medico:v('medico'),sede:v('sede'),anestesia:v('anestesia'),telDesconocido:telDesc?'1':''});
   }
   b.disabled=true; b.textContent='Guardando…';
   try{
