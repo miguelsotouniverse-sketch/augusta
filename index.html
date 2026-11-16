@@ -161,6 +161,9 @@
   .btn[disabled]{opacity:.45;cursor:default}
   .sel{font-family:'Jost';font-size:13px;padding:9px 10px;border:1px solid var(--line);background:#fff;color:var(--negro);max-width:100%}
   .sel.falta{border-color:var(--riesgo)}
+  .cxform{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;width:100%}
+  .cxform label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);display:flex;flex-direction:column;gap:4px}
+  .cxform .sel{width:100%}
   .dec-ok{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--campeon);padding:18px 0 30px}
   @media(max-width:680px){.dec{grid-template-columns:1fr}.dec .monto{text-align:left}}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--negro);color:var(--crema);font-size:13px;padding:12px 18px;z-index:10000;display:none;max-width:90vw}
@@ -364,7 +367,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente',cirugias:'Cirugías'};
 // App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
 // Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
 const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
@@ -398,6 +401,24 @@ function renderDecisiones(){
       acc=`${!d.pagador?`<select class="sel falta" id="pag-${i}">${opcionesPagador('')}</select>`:''}
         <button class="btn" data-i="${i}" data-acc="aprobar">Aprobar ${mxn(d.monto)}</button>
         <a class="btn sec" href="${esc(d.enlace)}" target="_blank" rel="noopener">Ver el caso</a>`;
+    } else if(d.tipo==='cx_sede'){
+      acc=`<select class="sel falta" id="cx-sede-${i}"><option value="">¿En qué clínica?</option><option>Zorvix</option><option>Renasté</option></select>
+        <button class="btn" data-i="${i}" data-acc="cx_sede">Guardar en la agenda</button>`;
+    } else if(d.tipo==='cx_anest'){
+      acc=`<select class="sel${d.sugerido?'':' falta'}" id="cx-ane-${i}"><option value="">Anestesiólogo…</option>${(d.opciones||[]).map(o=>`<option value="${esc(o.email)}"${o.email===d.sugerido?' selected':''}>${esc(o.nombre)}</option>`).join('')}</select>
+        <button class="btn" data-i="${i}" data-acc="cx_anest">Asignar en ${esc(d.sede)}</button>`;
+    } else if(d.tipo==='cx_formato'){
+      const op=(l,v)=>l.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('');
+      acc=`<div class="cxform" id="cx-f-${i}">
+          <label>Paciente<input class="sel" name="paciente" value="${esc(d.paciente)}"></label>
+          <label>Teléfono<input class="sel${d.telefono?'':' falta'}" name="telefono" value="${esc(d.telefono)}" placeholder="10 dígitos"></label>
+          <label>Cirugía programada<input class="sel" name="procedimiento" value="${esc(d.procedimiento)}"></label>
+          <label>Médico que opera<select class="sel" name="medico"><option value="">—</option>${op(d.medicos||[],d.medico)}</select></label>
+          <label>Clínica<select class="sel falta" name="sede"><option value="">¿Zorvix o Renasté?</option><option>Zorvix</option><option>Renasté</option></select></label>
+          <label>Anestesia<select class="sel" name="anestesia"><option value="">—</option>${op(['General','Sedación','Local'],d.anestesia)}</select></label>
+        </div>
+        <button class="btn" data-i="${i}" data-acc="cx_formato">Pasar al formato de la agenda</button>
+        <span class="hint" style="margin:0">Si no es una cirugía, use «Corregir».</span>`;
     } else if(d.tipo==='pagador'){
       acc=`<select class="sel falta" id="pag-${i}">${opcionesPagador('')}</select>
         <button class="btn" data-i="${i}" data-acc="pagador">Guardar</button>`;
@@ -411,7 +432,7 @@ function renderDecisiones(){
       <div class="monto">${d.monto?mxn(d.monto):''}${sub}</div>
       <div class="acc">${acc}<button class="corr-link" data-ci="${i}" style="margin-left:auto">Corregir</button></div></div>`;
   }).join('')+'</div>';
-  el.querySelectorAll('button[data-acc]').forEach(b=>b.onclick=()=>decidir(b));
+  el.querySelectorAll('button[data-acc]').forEach(b=>b.onclick=()=>/^cx_/.test(b.dataset.acc)?decidirCx(b):decidir(b));
   el.querySelectorAll('button[data-ci]').forEach(b=>b.onclick=()=>{
     const d=D[Number(b.dataset.ci)];
     abreCorreccion(b.closest('.dec'),{clave:'dec:'+d.id,modulo:d.modulo,titulo:d.titulo,decision:d},'div');
@@ -439,6 +460,33 @@ async function decidir(b){
     b.disabled=false; delete b.dataset.listo; b.classList.remove('conf'); b.textContent=acc==='aprobar'?'Aprobar '+mxn(d.monto):'Guardar';
     toast(e.message,true);
   }
+}
+
+/* ---- cirugías: sede, formato de agenda y anestesiólogo, escritos en la fuente ---- */
+async function decidirCx(b){
+  const i=Number(b.dataset.i), d=DATA.decisiones[i], acc=b.dataset.acc, txt=b.textContent;
+  const q={accion:acc};
+  if(acc==='cx_sede'){
+    const s=document.getElementById('cx-sede-'+i); if(!s.value){ toast('Elija la clínica',true); s.focus(); return; }
+    Object.assign(q,{evento:d.evento,sede:s.value});
+  } else if(acc==='cx_anest'){
+    const s=document.getElementById('cx-ane-'+i); if(!s.value){ toast('Elija el anestesiólogo',true); s.focus(); return; }
+    Object.assign(q,{sede:d.sede,caso:d.caso,anestesiologo:s.value});
+  } else {
+    const f=document.getElementById('cx-f-'+i), v=n=>f.querySelector(`[name="${n}"]`).value.trim();
+    const faltan=[['paciente','el nombre'],['telefono','el teléfono'],['procedimiento','la cirugía'],['medico','el médico'],['sede','la clínica']].filter(x=>!v(x[0]));
+    if(faltan.length){ toast('Falta '+faltan.map(x=>x[1]).join(', '),true); f.querySelector(`[name="${faltan[0][0]}"]`).focus(); return; }
+    if(v('telefono').replace(/\D/g,'').length<10){ toast('El teléfono debe tener 10 dígitos',true); return; }
+    Object.assign(q,{evento:d.evento,paciente:v('paciente'),telefono:v('telefono'),procedimiento:v('procedimiento'),medico:v('medico'),sede:v('sede'),anestesia:v('anestesia')});
+  }
+  b.disabled=true; b.textContent='Guardando…';
+  try{
+    const r=await augustaGet(q);
+    toast(acc==='cx_anest'?'Anestesiólogo asignado en '+d.sede:(acc==='cx_sede'?'Sede guardada en la agenda'+(r.eventos>1?' ('+r.eventos+' eventos)':''):'Evento pasado al formato de la agenda'));
+    const card=document.getElementById('dec-'+i);
+    if(card){ card.style.opacity='.35'; card.querySelector('.acc').innerHTML='<span class="hint" style="margin:0">Guardado ✓ · la clínica lo toma en su siguiente revisión</span>'; }
+    setTimeout(()=>cargar(true,true),1500);
+  }catch(e){ b.disabled=false; b.textContent=txt; toast(e.message,true); }
 }
 
 /* ---- lista de alertas de un módulo ---- */
@@ -569,7 +617,8 @@ const MOTIVOS={
   dinero:['Ya se cobró / ya está pagado','Cortesía o descuento autorizado','Error de registro','Otro'],
   agenda:['No asistió','Cita cancelada','Error en la agenda','Otro'],
   caja:['Ya se resolvió','Error de registro','Otro'],
-  sistema:['Ya se resolvió','Otro']
+  sistema:['Ya se resolvió','Otro'],
+  cirugias:['No es una cirugía','Se canceló / ya no va','No lleva anestesiólogo (anestesia local)','Se resolvió en la app de la clínica','Otro']
 };
 const EXCLUYE_ANE='No se realizó el procedimiento';
 function augustaGet(params){
