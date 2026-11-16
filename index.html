@@ -118,6 +118,14 @@
 
   .fuentes{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--ink-soft);margin-bottom:22px}
   .fuentes .ok{color:var(--campeon)}.fuentes .ko{color:var(--riesgo)}
+  .corr-link{font-family:'Jost';font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink-soft);cursor:pointer;padding:2px 0;margin-top:6px}
+  .corr-link:hover{color:var(--ink);border-color:var(--ink)}
+  .corr-panel{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--crema);border:1px solid var(--line);padding:12px;margin-top:8px}
+  .corr-panel select,.corr-panel input{font-family:'Jost';font-size:13px;padding:8px 10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .corr-panel select{min-width:240px}.corr-panel input{flex:1;min-width:180px}
+  .corr-panel .aviso{flex-basis:100%;font-size:12px;color:var(--ink-soft)}
+  .corr-list .it{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px}
+  .corr-list .it .d{color:var(--ink-soft);font-size:12px}
   .diabar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 22px}
   .diabar input[type=date]{font-family:'Jost';font-size:14px;padding:7px 10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
   .diabar .flecha{font-family:'Jost';font-size:16px;line-height:1;padding:7px 12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
@@ -212,6 +220,11 @@
     <div class="seg-bar" id="segbar"></div>
     <div class="react-summary" id="rsum"></div>
     <div id="alertas"><div class="empty">Cargando…</div></div>
+    <div class="block" id="corr-block" style="display:none;margin-top:34px">
+      <div class="sec-lab">Corregido por usted</div>
+      <div class="corr-list" id="corr-list"></div>
+      <div class="hint">Lo corregido deja de aparecer en el tablero y en los avisos. Queda registrado quién lo corrigió y por qué en la hoja «Augusta — Correcciones». «Restaurar» lo regresa.</div>
+    </div>
   </section>
 
   <!-- ANESTESIA -->
@@ -396,9 +409,13 @@ function renderDecisiones(){
       <div><div class="mod">${MOD[d.modulo]||''}</div><div class="t">${esc(d.titulo)}</div><div class="d">${esc(d.detalle)}</div>
         ${d.desglose?`<div class="d">${esc(d.desglose)}</div>`:''}${ver}${mot}</div>
       <div class="monto">${d.monto?mxn(d.monto):''}${sub}</div>
-      <div class="acc">${acc}</div></div>`;
+      <div class="acc">${acc}<button class="corr-link" data-ci="${i}" style="margin-left:auto">Corregir</button></div></div>`;
   }).join('')+'</div>';
   el.querySelectorAll('button[data-acc]').forEach(b=>b.onclick=()=>decidir(b));
+  el.querySelectorAll('button[data-ci]').forEach(b=>b.onclick=()=>{
+    const d=D[Number(b.dataset.ci)];
+    abreCorreccion(b.closest('.dec'),{clave:'dec:'+d.id,modulo:d.modulo,titulo:d.titulo,decision:d},'div');
+  });
 }
 async function decidir(b){
   const i=Number(b.dataset.i), d=DATA.decisiones[i], acc=b.dataset.acc;
@@ -498,8 +515,11 @@ function renderFotos(){
     <div class="kpi"><div class="lab">Revisado hasta</div><div class="val">${fc(F.hasta)}<br><small>hoy se revisa desde las ${esc(F.revisaHoyDesde)}</small></div></div>`;
   document.getElementById('f-faltan').innerHTML=F.faltan.length?F.faltan.map(x=>`<tr>
     <td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar)}</span></td><td class="nm">${esc(x.paciente)}</td>
-    <td>${esc(x.procedimiento||x.motivo)}<span class="sm">${esc(x.motivo)}</span></td><td>${esc(x.atendio||'—')}</td></tr>`).join('')
+    <td>${esc(x.procedimiento||x.motivo)}<span class="sm">${esc(x.motivo)}</span></td><td>${esc(x.atendio||'—')}<br><button class="corr-link" data-k="${esc(x.clave||'')}">Corregir</button></td></tr>`).join('')
     :'<tr><td colspan="4" class="hint">Todas las pacientes que asistieron tienen sus fotos.</td></tr>';
+  document.querySelectorAll('#f-faltan .corr-link').forEach(b=>b.onclick=()=>{
+    const x=F.faltan.find(y=>y.clave===b.dataset.k); if(x) abreCorreccion(b.closest('tr'),{clave:x.clave,modulo:'fotos',titulo:'Sin fotos clínicas · '+x.paciente},'tr');
+  });
   document.getElementById('f-dias').innerHTML=F.dias.map(d=>`<tr><td>${fc(d.dia)}</td><td class="r">${d.revisadas}</td><td class="r">${d.conFotos}</td>
     <td class="r" style="${d.faltan?'color:var(--riesgo)':''}">${d.faltan}</td><td class="r">${d.sinAsistencia}</td></tr>`).join('')||'<tr><td colspan="5" class="hint">Sin citas en el periodo.</td></tr>';
   document.getElementById('f-nota').textContent='No se fotografían: valoraciones de primera vez, depilación y pacientes de la Dra. Carmen Damián. Las fotos subidas hasta '+3+' días después de la cita cuentan.';
@@ -526,15 +546,82 @@ function renderExpediente(){
     (x.sinImprimir.length?`<span style="color:var(--ink-soft)">Sin imprimir: ${esc(x.sinImprimir.join(', '))}</span>`:'');
   const at=x=>`<td>${fc(x.dia)}<span class="sm">${esc(x.sede)}${x.hora?' · '+esc(x.hora):''}</span><span class="sm">${esc(x.atencion)}</span></td>`;
   const mal=E.filas.filter(x=>x.estado==='incompleto'), pl=E.filas.filter(x=>x.estado==='en_plazo'), ok=E.filas.filter(x=>x.estado==='completo');
-  if(mal.length) document.getElementById('e-mal').innerHTML=mal.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td style="color:var(--riesgo)">${qf(x)}</td><td>${esc(x.responsable||'—')}</td></tr>`).join('');
+  const cl=x=>`<br><button class="corr-link" data-k="${esc(x.clave||'')}">Corregir</button>`;
+  if(mal.length) document.getElementById('e-mal').innerHTML=mal.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td style="color:var(--riesgo)">${qf(x)}</td><td>${esc(x.responsable||'—')}${cl(x)}</td></tr>`).join('');
   else vacio('e-mal',4,'Ningún expediente atrasado.');
-  if(pl.length) document.getElementById('e-plazo').innerHTML=pl.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td>${qf(x)}</td><td>${fc(x.vence)}</td></tr>`).join('');
+  if(pl.length) document.getElementById('e-plazo').innerHTML=pl.map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td>${qf(x)}</td><td>${fc(x.vence)}${cl(x)}</td></tr>`).join('');
   else vacio('e-plazo',4,'—');
+  document.querySelectorAll('#e-mal .corr-link, #e-plazo .corr-link').forEach(b=>b.onclick=()=>{
+    const x=E.filas.find(y=>y.clave===b.dataset.k); if(x) abreCorreccion(b.closest('tr'),{clave:x.clave,modulo:'expediente',titulo:'Expediente · '+x.paciente+' · '+x.sede},'tr');
+  });
   if(ok.length) document.getElementById('e-ok').innerHTML=ok.slice(0,60).map(x=>`<tr>${at(x)}<td class="nm">${esc(x.paciente)}</td><td>${esc(x.tiene.join(' · '))}</td></tr>`).join('');
   else vacio('e-ok',3,'—');
   document.getElementById('e-nota').textContent='Un documento cuenta cuando ya se imprimió su última versión desde la app (la firma es a mano). '+
     'Las impresiones se registran desde el '+fc(E.impresionDesde)+'; antes de esa fecha sólo se exige que la nota exista. '+
     'No se revisan las pacientes de la Dra. Carmen Damián en el consultorio.';
+}
+
+/* ---- CORRECCIONES: cualquier pendiente se corrige desde aquí ---- */
+const MOTIVOS={
+  fotos:['No asistió','No requiere fotos','Las fotos están con otro nombre','Ya se subieron','Otro'],
+  expediente:['No asistió','No se realizó la atención','El documento está en papel o en otro expediente','Ya se completó','No aplica a esta paciente','Otro'],
+  anestesia:['No se realizó el procedimiento','Lo resolvió otra persona','Error en la agenda','Otro'],
+  dinero:['Ya se cobró / ya está pagado','Cortesía o descuento autorizado','Error de registro','Otro'],
+  agenda:['No asistió','Cita cancelada','Error en la agenda','Otro'],
+  caja:['Ya se resolvió','Error de registro','Otro'],
+  sistema:['Ya se resolvió','Otro']
+};
+const EXCLUYE_ANE='No se realizó el procedimiento';
+function augustaGet(params){
+  return new Promise((ok,mal)=>{
+    const cb='__augustac'+Date.now()+Math.floor(Math.random()*1e4);
+    window[cb]=j=>{ delete window[cb]; s.remove(); (j&&!j.error)?ok(j):mal(new Error((j&&j.error)||'Sin respuesta')); };
+    const q=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
+    const s=document.createElement('script');
+    s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&'+q+'&callback='+cb+'&t='+Date.now();
+    s.onerror=()=>{ delete window[cb]; mal(new Error('No se pudo conectar con Augusta')); };
+    document.head.appendChild(s);
+  });
+}
+function abreCorreccion(cont,item,modo){
+  document.querySelectorAll('.corr-panel').forEach(p=>{ const r=p.closest('tr.corr-row'); (r||p).remove(); });
+  const ops=(MOTIVOS[item.modulo]||['Ya se resolvió','No aplica','Otro']);
+  const dec=item.decision, aneFuente=dec&&dec.modulo==='anestesia'&&(dec.tipo==='aprobar'||dec.tipo==='pagador');
+  const panel=document.createElement('div'); panel.className='corr-panel';
+  panel.innerHTML=`<select>${'<option value="">Motivo de la corrección…</option>'+ops.map(o=>`<option>${esc(o)}</option>`).join('')}</select>
+    <input type="text" maxlength="300" placeholder="Detalle (opcional)">
+    <button class="btn">Guardar corrección</button><button class="btn sec">Cancelar</button>
+    <div class="aviso">${aneFuente?'Si elige «'+EXCLUYE_ANE+'», el caso también se excluye en la app de anestesia (no se paga).':'Deja de aparecer como pendiente. Puede restaurarlo cuando quiera.'}</div>`;
+  if(modo==='tr'){ const tr=document.createElement('tr'); tr.className='corr-row'; const td=document.createElement('td'); td.colSpan=cont.children.length; td.appendChild(panel); tr.appendChild(td); cont.after(tr); }
+  else cont.appendChild(panel);
+  const [sel,inp,bOk,bNo]=[panel.querySelector('select'),panel.querySelector('input'),...panel.querySelectorAll('button')];
+  bNo.onclick=()=>{ const r=panel.closest('tr.corr-row'); (r||panel).remove(); };
+  bOk.onclick=async()=>{
+    if(!sel.value){ toast('Escoja el motivo',true); sel.focus(); return; }
+    bOk.disabled=true; bOk.textContent='Guardando…';
+    try{
+      if(aneFuente && sel.value===EXCLUYE_ANE){
+        await aneApi('rechazar',{id:dec.caso,motivo:sel.value+(inp.value?': '+inp.value:''),excluir:true});
+      }
+      await augustaGet({accion:'corregir',clave:item.clave,modulo:item.modulo,titulo:item.titulo,motivo:sel.value,detalle:inp.value});
+      toast(aneFuente&&sel.value===EXCLUYE_ANE?'Corregido y excluido en la app de anestesia':'Corrección guardada');
+      recargaTodo();
+    }catch(e){ bOk.disabled=false; bOk.textContent='Guardar corrección'; toast(e.message,true); }
+  };
+  sel.focus();
+}
+function recargaTodo(){ cargar(false,true); if(DIA_SEL) eligeDia(DIA_SEL); }
+function renderCorrecciones(){
+  const L=(DATA&&DATA.correcciones)||[], blk=document.getElementById('corr-block');
+  blk.style.display=L.length?'block':'none';
+  document.getElementById('corr-list').innerHTML=L.map(c=>`<div class="it"><div>${esc(c.titulo||c.clave)}
+      <div class="d">${esc(c.motivo)}${c.detalle?' · '+esc(c.detalle):''} · ${esc(c.por)} · ${esc(c.fecha)}</div></div>
+    <div><button class="corr-link" data-r="${esc(c.clave)}">Restaurar</button></div></div>`).join('');
+  document.querySelectorAll('#corr-list [data-r]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true; b.textContent='Restaurando…';
+    try{ await augustaGet({accion:'restaurar',clave:b.dataset.r}); toast('Restaurado: vuelve a aparecer como pendiente'); recargaTodo(); }
+    catch(e){ b.disabled=false; b.textContent='Restaurar'; toast(e.message,true); }
+  });
 }
 
 /* ---- selector de día (Fotos y Expediente) ---- */
@@ -613,8 +700,12 @@ function renderAlertas(){
     <div class="al ${a.nivel}">
       <div><div class="niv">${NIVEL[a.nivel]}</div><div class="f">${MOD[a.modulo]||''}</div></div>
       <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div></div>
-      <div class="f">${fc(a.fecha)}</div>
+      <div class="f">${fc(a.fecha)}<br><button class="corr-link" data-corr="al" data-k="${esc(a.clave)}">Corregir</button></div>
     </div>`).join('') : '<div class="empty">Nada en esta vista</div>';
+  document.querySelectorAll('#alertas .corr-link').forEach(b=>b.onclick=()=>{
+    const a=DATA.alertas.find(x=>x.clave===b.dataset.k); if(a) abreCorreccion(b.closest('.al'),{clave:a.clave,modulo:a.modulo,titulo:a.titulo},'div');
+  });
+  renderCorrecciones();
 }
 
 /* ---- DINERO ---- */
