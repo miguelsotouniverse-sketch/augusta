@@ -204,6 +204,7 @@
     <button class="tab" data-view="expediente">Expediente</button>
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
+    <button class="btn-ref" id="btn-revisar" style="margin-left:auto;align-self:center" onclick="revisarAhora()" title="Augusta vuelve a revisar todas las fuentes en este momento">↻ Revisar ahora</button>
   </div>
 </div></header>
 
@@ -580,7 +581,7 @@ async function marcaAsis(b){
     await augustaGet({accion:'asistencia',cal:b.dataset.cal,evento:b.dataset.ev,dia:b.dataset.dia,hora:b.dataset.hora,valor:b.dataset.v});
     cont.innerHTML='<span class="hint" style="margin:0">'+(b.dataset.v==='Sí'?'Asistió ✓':'No asistió ✓')+' · guardado en la agenda</span>';
     toast('Asistencia guardada en la agenda');
-    clearTimeout(window.__asisT); window.__asisT=setTimeout(()=>{ cargar(true,true); if(DIA_SEL) eligeDia(DIA_SEL); },2500);
+    clearTimeout(window.__asisT); window.__asisT=setTimeout(()=>{ cargar(true,true); if(DIA_SEL) eligeDia(DIA_SEL,true); },2500);
   }catch(e){ cont.innerHTML=txt; toast(e.message,true); }
 }
 document.addEventListener('click',e=>{ const b=e.target.closest('.asis-acc button[data-v]'); if(b && !b.disabled) marcaAsis(b); });
@@ -724,7 +725,8 @@ function pintaBarras(){
       'Mostrando los últimos días.');
   });
 }
-function eligeDia(dia){
+function revisarAhora(){ document.getElementById('btn-revisar').textContent='Revisando… (unos segundos)'; cargar(true,true); if(DIA_SEL) eligeDia(DIA_SEL,true); }
+function eligeDia(dia,forzar){
   if(dia && dia>hoyISO()) dia=hoyISO();
   DIA_SEL=dia||''; DIA_DATA=null;
   if(!DIA_SEL){ DIA_CARGANDO=false; pintaBarras(); renderFotos(); renderExpediente(); return; }
@@ -741,7 +743,7 @@ function eligeDia(dia){
     pintaBarras(); renderFotos(); renderExpediente();
   };
   const s=document.createElement('script');
-  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&dia='+pedido+'&callback='+cb+'&t='+Date.now();
+  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&dia='+pedido+(forzar?'&refrescar=1':'')+'&callback='+cb+'&t='+Date.now();
   s.onerror=()=>{ if(pedido!==DIA_SEL) return; DIA_CARGANDO=false; DIA_DATA={errores:['No se pudo conectar con Augusta']}; pintaBarras(); renderFotos(); renderExpediente(); };
   document.head.appendChild(s);
 }
@@ -865,6 +867,7 @@ function pintar(json){
   document.getElementById('btn-ref').onclick=()=>cargar(true);
   renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); pintaBarras(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
+  const br=document.getElementById('btn-revisar'); if(br){ br.textContent='↻ Revisar ahora'; br.title='Revisado por última vez: '+DATA.generado; }
 }
 
 function cargar(refrescar,silencioso){
