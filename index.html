@@ -281,6 +281,11 @@
       <div class="sec-lab">Asistieron y no tienen fotos</div>
       <div class="tscroll"><table><thead><tr><th>Cita</th><th>Paciente</th><th>Motivo</th><th>Atendió</th></tr></thead><tbody id="f-faltan"></tbody></table></div>
     </div>
+    <div class="block" id="f-asis-b" style="display:none">
+      <div class="sec-lab">Asistencia sin marcar · márquela aquí</div>
+      <div class="tscroll"><table><thead><tr><th>Cita</th><th>Paciente</th><th>Motivo</th><th>¿Asistió?</th></tr></thead><tbody id="f-asis"></tbody></table></div>
+      <div class="hint">Se guarda en la cita de la agenda, igual que cuando lo marca recepción.</div>
+    </div>
     <div class="block">
       <div class="sec-lab">Por día</div>
       <div class="tscroll"><table><thead><tr><th>Día</th><th class="r">Revisadas</th><th class="r">Con fotos</th><th class="r">Sin fotos</th><th class="r">Asistencia sin marcar</th></tr></thead><tbody id="f-dias"></tbody></table></div>
@@ -303,6 +308,11 @@
       <span class="est"></span>
     </div>
     <div class="kpis" id="e-kpis"></div>
+    <div class="block" id="e-asis-b" style="display:none">
+      <div class="sec-lab">Asistencia sin marcar · márquela aquí</div>
+      <div class="tscroll"><table><thead><tr><th>Cita</th><th>Paciente</th><th>Motivo</th><th>¿Asistió?</th></tr></thead><tbody id="e-asis"></tbody></table></div>
+      <div class="hint">Sin este dato Augusta no puede revisar su expediente. Se guarda en la cita de la agenda.</div>
+    </div>
     <div class="block">
       <div class="sec-lab">Por sede</div>
       <div class="tscroll"><table><thead><tr><th>Sede</th><th class="r">Revisadas</th><th class="r">Completas</th><th class="r">En plazo</th><th class="r">Incompletas</th><th class="r">Cumplimiento</th></tr></thead><tbody id="e-sedes"></tbody></table></div>
@@ -551,11 +561,35 @@ function renderCaja(){
 }
 
 /* ---- FOTOS ---- */
+/* ---- asistencia: se marca desde el tablero y se escribe en la cita de la agenda ---- */
+function botonesAsis(a){
+  if(!a) return '';
+  const d=`data-cal="${esc(a.cal)}" data-ev="${esc(a.evento)}" data-dia="${esc(a.dia)}" data-hora="${esc(a.hora)}"`;
+  return `<span class="asis-acc"><button class="btn" ${d} data-v="Sí">Asistió</button> <button class="btn sec" ${d} data-v="No">No asistió</button></span>`;
+}
+function pintaAsis(lista,tb,bloque){
+  const L=lista||[];
+  document.getElementById(bloque).style.display=L.length?'':'none';
+  document.getElementById(tb).innerHTML=L.map(x=>`<tr><td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar||'')}</span></td>
+    <td class="nm">${esc(x.paciente)}</td><td>${esc(x.procedimiento||x.motivo||'')}<span class="sm">${esc(x.atendio||'')}</span></td><td>${botonesAsis(x.asis)}</td></tr>`).join('');
+}
+async function marcaAsis(b){
+  const cont=b.closest('.asis-acc'); const txt=cont.innerHTML;
+  cont.querySelectorAll('button').forEach(x=>x.disabled=true);
+  try{
+    await augustaGet({accion:'asistencia',cal:b.dataset.cal,evento:b.dataset.ev,dia:b.dataset.dia,hora:b.dataset.hora,valor:b.dataset.v});
+    cont.innerHTML='<span class="hint" style="margin:0">'+(b.dataset.v==='Sí'?'Asistió ✓':'No asistió ✓')+' · guardado en la agenda</span>';
+    toast('Asistencia guardada en la agenda');
+    clearTimeout(window.__asisT); window.__asisT=setTimeout(()=>{ cargar(true,true); if(DIA_SEL) eligeDia(DIA_SEL); },2500);
+  }catch(e){ cont.innerHTML=txt; toast(e.message,true); }
+}
+document.addEventListener('click',e=>{ const b=e.target.closest('.asis-acc button[data-v]'); if(b && !b.disabled) marcaAsis(b); });
+
 function renderFotos(){
   const F=DIA_SEL?(DIA_DATA&&DIA_DATA.fotos):DATA.fotos;
   if(!F){ const t=DIA_CARGANDO?'Revisando '+fc(DIA_SEL)+'…':'No se pudo revisar.';
     document.getElementById('f-kpis').innerHTML=''; document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">'+t+'</td></tr>';
-    document.getElementById('f-dias').innerHTML=''; document.getElementById('f-ok').innerHTML=''; document.getElementById('f-nota').textContent=''; return; }
+    document.getElementById('f-dias').innerHTML=''; document.getElementById('f-ok').innerHTML=''; document.getElementById('f-nota').textContent=''; document.getElementById('f-asis-b').style.display='none'; return; }
   const tot=F.dias.reduce((s,d)=>({r:s.r+d.revisadas,c:s.c+d.conFotos,f:s.f+d.faltan,a:s.a+d.sinAsistencia}),{r:0,c:0,f:0,a:0});
   const pct=tot.r?Math.round(tot.c/tot.r*100):100;
   document.getElementById('f-kpis').innerHTML=`
@@ -563,6 +597,7 @@ function renderFotos(){
     <div class="kpi"><div class="lab">Sin fotos</div><div class="val">${tot.f}<br><small>desde ${fc(F.desde)}</small></div></div>
     <div class="kpi"><div class="lab">Asistencia sin marcar</div><div class="val">${tot.a}<br><small>no se pueden revisar</small></div></div>
     <div class="kpi"><div class="lab">Revisado hasta</div><div class="val">${fc(F.hasta)}<br><small>hoy se revisa desde las ${esc(F.revisaHoyDesde)}</small></div></div>`;
+  pintaAsis(F.sinAsistencia,'f-asis','f-asis-b');
   document.getElementById('f-faltan').innerHTML=F.faltan.length?F.faltan.map(x=>`<tr>
     <td>${fc(x.dia)}<span class="sm">${esc(x.hora)} · ${esc(x.lugar)}</span></td><td class="nm">${esc(x.paciente)}</td>
     <td>${esc(x.procedimiento||x.motivo)}<span class="sm">${esc(x.motivo)}</span></td><td>${esc(x.atendio||'—')}<br><button class="corr-link" data-k="${esc(x.clave||'')}">Corregir</button></td></tr>`).join('')
@@ -582,7 +617,8 @@ function renderExpediente(){
   const E=DIA_SEL?(DIA_DATA&&DIA_DATA.expediente):DATA.expediente;
   const vacio=(id,n,t)=>document.getElementById(id).innerHTML=`<tr><td colspan="${n}" class="hint">${t}</td></tr>`;
   if(!E){ document.getElementById('e-kpis').innerHTML=''; vacio('e-mal',4,DIA_CARGANDO?'Revisando '+fc(DIA_SEL)+'…':'No se pudo revisar el expediente.');
-    ['e-sedes','e-plazo','e-ok'].forEach(id=>document.getElementById(id).innerHTML=''); document.getElementById('e-nota').textContent=''; return; }
+    ['e-sedes','e-plazo','e-ok'].forEach(id=>document.getElementById(id).innerHTML=''); document.getElementById('e-nota').textContent=''; document.getElementById('e-asis-b').style.display='none'; return; }
+  pintaAsis(E.sinAsistencia,'e-asis','e-asis-b');
   const T=E.total, pct=T.revisadas?Math.round(T.completas/T.revisadas*100):100;
   document.getElementById('e-kpis').innerHTML=`
     <div class="kpi"><div class="lab">Cumplimiento NOM-004</div><div class="val">${pct}%<br><small>${T.completas} de ${T.revisadas} atenciones</small></div></div>
@@ -750,7 +786,7 @@ function renderAlertas(){
   document.getElementById('alertas').innerHTML = L.length ? L.map(a=>`
     <div class="al ${a.nivel}">
       <div><div class="niv">${NIVEL[a.nivel]}</div><div class="f">${MOD[a.modulo]||''}</div></div>
-      <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div></div>
+      <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div>${a.asis?`<div style="margin-top:8px">${botonesAsis(a.asis)}</div>`:''}</div>
       <div class="f">${fc(a.fecha)}<br><button class="corr-link" data-corr="al" data-k="${esc(a.clave)}">Corregir</button></div>
     </div>`).join('') : '<div class="empty">Nada en esta vista</div>';
   document.querySelectorAll('#alertas .corr-link').forEach(b=>b.onclick=()=>{
