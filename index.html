@@ -378,7 +378,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente',cirugias:'Cirugías',cotizaciones:'Cotizaciones'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente',cirugias:'Cirugías',cotizaciones:'Cotizaciones',almacen:'Almacén'};
 // App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
 // Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
 const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
@@ -657,6 +657,7 @@ const MOTIVOS={
   agenda:['No asistió','Cita cancelada','Error en la agenda','Otro'],
   caja:['Ya se resolvió','Error de registro','Otro'],
   sistema:['Ya se resolvió','Otro'],
+  almacen:['Ya se surtió / ya llegó','Ya se cerró la caja','Ya se dio de baja','No aplica','Otro'],
   cotizaciones:['Ya se cotizó (con otro nombre o teléfono)','No procede cotizar (no es candidata / sólo informes)','No asistió','Otro'],
   cirugias:['No es una cirugía','Se canceló / ya no va','No lleva anestesiólogo (anestesia local)','Se resolvió en la app de la clínica','Otro']
 };
@@ -773,7 +774,8 @@ function renderAlertas(){
     ['anestesia','Anestesia',A.filter(a=>a.modulo==='anestesia').length],['caja','Caja Zorvix',A.filter(a=>a.modulo==='caja').length],
     ['fotos','Fotos',A.filter(a=>a.modulo==='fotos').length],
     ['expediente','Expediente',A.filter(a=>a.modulo==='expediente').length],
-    ['cotizaciones','Cotizaciones',A.filter(a=>a.modulo==='cotizaciones').length]];
+    ['cotizaciones','Cotizaciones',A.filter(a=>a.modulo==='cotizaciones').length],
+    ['almacen','Almacén',A.filter(a=>a.modulo==='almacen').length]];
   const sb=document.getElementById('segbar'); sb.innerHTML='';
   grupos.forEach(([k,lab,n])=>{
     const b=document.createElement('button');
