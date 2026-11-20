@@ -170,6 +170,46 @@
   .toast.err{background:var(--riesgo)}
 
   .foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:11px;color:var(--taupe);letter-spacing:.5px}
+
+  /* ---- Órdenes a Augusta (chat) ---- */
+  .ord-fab{position:fixed;right:22px;bottom:22px;z-index:900;font-family:'Jost';font-size:11px;letter-spacing:1.8px;text-transform:uppercase;padding:14px 20px;background:var(--negro);color:var(--crema);border:0;cursor:pointer;box-shadow:0 10px 30px rgba(3,7,7,.18);display:flex;align-items:center;gap:10px}
+  .ord-fab:hover{background:#1d2222}
+  .ord-fab .dot{width:7px;height:7px;border-radius:50%;background:var(--taupe)}
+  .ord-panel{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100vw;z-index:950;background:var(--crema);border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(3,7,7,.10);display:none;flex-direction:column}
+  .ord-panel.on{display:flex}
+  @media(max-width:560px){.ord-panel{width:100vw;border-left:0}.ord-fab{right:14px;bottom:14px}}
+  .ord-head{padding:18px 20px 14px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--paper)}
+  .ord-head h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px;line-height:1}
+  .ord-head .sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);margin-top:4px}
+  .ord-x{background:none;border:0;font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:2px 6px}
+  .ord-x:hover{color:var(--negro)}
+  .ord-log{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+  .ord-msg{max-width:88%;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+  .ord-msg.yo{align-self:flex-end;background:var(--negro);color:var(--crema);padding:10px 14px}
+  .ord-msg.aug{align-self:flex-start;background:#fff;border:1px solid var(--line);border-left:3px solid var(--taupe);padding:10px 14px}
+  .ord-msg.sis{align-self:center;font-size:11.5px;letter-spacing:.3px;color:var(--ink-soft);text-align:center;max-width:100%}
+  .ord-msg.err{align-self:stretch;border-left-color:var(--riesgo);color:var(--riesgo)}
+  .ord-card{align-self:stretch;background:#fff;border:1px solid var(--line);border-left:3px solid var(--negro);padding:14px 16px}
+  .ord-card.hecha{border-left-color:var(--campeon)}
+  .ord-card.anulada{opacity:.5}
+  .ord-card .k{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft)}
+  .ord-card .t{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:21px;line-height:1.15;margin:4px 0 8px}
+  .ord-card dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}
+  .ord-card dt{color:var(--ink-soft)}
+  .ord-card .acc{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+  .ord-card .res{margin-top:10px;font-size:13px;line-height:1.45}
+  .ord-card .res.ok{color:var(--campeon)}.ord-card .res.bad{color:var(--riesgo)}
+  .ord-pie{border-top:1px solid var(--line);padding:12px 14px;background:var(--paper)}
+  .ord-pie form{display:flex;gap:8px;align-items:flex-end}
+  .ord-pie textarea{flex:1;font-family:'Jost';font-size:14px;line-height:1.4;padding:10px 12px;border:1px solid var(--line);background:#fff;color:var(--negro);resize:none;min-height:44px;max-height:140px}
+  .ord-pie textarea:focus{outline:none;border-color:var(--taupe)}
+  .ord-mic{width:44px;height:44px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:17px;flex:none}
+  .ord-mic.on{background:var(--riesgo);border-color:var(--riesgo);color:#fff}
+  .ord-pie .btn{height:44px;flex:none}
+  .ord-ej{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ord-ej button{font-family:'Jost';font-size:11.5px;padding:6px 10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer}
+  .ord-ej button:hover{border-color:var(--taupe);color:var(--negro)}
+  .ord-pensando{align-self:flex-start;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--ink-soft)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -365,6 +405,26 @@
 
   <div class="foot" id="foot"></div>
 </main>
+<button class="ord-fab" id="ord-fab" onclick="ordAbrir()" title="Déle una orden a Augusta: agendar, reagendar, cancelar o consultar la agenda"><span class="dot"></span>Ordenar a Augusta</button>
+<aside class="ord-panel" id="ord-panel" aria-label="Órdenes a Augusta">
+  <div class="ord-head">
+    <div><h2>Órdenes a Augusta</h2><div class="sub">Ella lo ejecuta · usted confirma</div></div>
+    <button class="ord-x" onclick="ordCerrar()" aria-label="Cerrar">×</button>
+  </div>
+  <div class="ord-log" id="ord-log"></div>
+  <div class="ord-pie">
+    <form id="ord-form" onsubmit="ordEnviar(event)">
+      <button type="button" class="ord-mic" id="ord-mic" onclick="ordDictar()" title="Dictar">🎙</button>
+      <textarea id="ord-txt" rows="1" placeholder="Ej. agéndame a Karla Berganza el sábado a las 10, revisión"></textarea>
+      <button class="btn" id="ord-btn" type="submit">Enviar</button>
+    </form>
+    <div class="ord-ej" id="ord-ej">
+      <button type="button" onclick="ordEjemplo(this)">¿Qué tengo mañana?</button>
+      <button type="button" onclick="ordEjemplo(this)">Agenda una valoración</button>
+      <button type="button" onclick="ordEjemplo(this)">Reagenda una cita</button>
+    </div>
+  </div>
+</aside>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -886,6 +946,248 @@ function cargar(refrescar,silencioso){
   s.onerror=()=>{ document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div>'; };
   document.head.appendChild(s);
 }
+
+/* =================================================================
+   ÓRDENES A AUGUSTA
+   Augusta entiende la orden (servidor de Augusta → API de Claude) y pide herramientas.
+   Las herramientas corren aquí, con la sesión de Google del doctor, contra la app de agenda:
+   así cada cita pasa por las mismas reglas que si la capturara recepción (anticipo,
+   empalmes, formato). Lo que escribe en la agenda espera a que el doctor presione Confirmar.
+   ================================================================= */
+const AGENDA_API = "https://script.google.com/macros/s/AKfycbzGs5Cv8Sa9AmpPEM4H65X4LNIieaUha7DhTJXPLFx0PfTBsMzp5h87yZmmw5N6SBmy/exec";
+const ORD = { msgs: [], ctx: null, cal: null, pacientes: {}, ocupado: false, rec: null };
+
+function ordAbrir(){
+  document.getElementById('ord-panel').classList.add('on');
+  document.getElementById('ord-fab').style.display='none';
+  if(!document.getElementById('ord-log').children.length)
+    ordPinta('aug','Dígame qué necesita. Puedo agendar consultas e inyectables, reagendar, cancelar y decirle qué hay en la agenda de cualquier día. Antes de escribir en la agenda le muestro la cita para que usted la confirme.');
+  setTimeout(()=>document.getElementById('ord-txt').focus(),50);
+}
+function ordCerrar(){ document.getElementById('ord-panel').classList.remove('on'); document.getElementById('ord-fab').style.display=''; }
+function ordEjemplo(b){ const t=document.getElementById('ord-txt'); t.value=b.textContent==='¿Qué tengo mañana?'?b.textContent:b.textContent+' a '; t.focus(); }
+function ordPinta(clase, texto){
+  const log=document.getElementById('ord-log'), d=document.createElement('div');
+  d.className='ord-msg '+clase; d.textContent=texto; log.appendChild(d); log.scrollTop=log.scrollHeight; return d;
+}
+function ordPensando(on){
+  const log=document.getElementById('ord-log'); let p=document.getElementById('ord-pensando');
+  if(on && !p){ p=document.createElement('div'); p.id='ord-pensando'; p.className='ord-pensando'; p.textContent='Augusta está en ello…'; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+  if(!on && p) p.remove();
+}
+function ordBloquea(on){ ORD.ocupado=on; document.getElementById('ord-btn').disabled=on; }
+
+/* ---- dictado por voz (Chrome / Safari) ---- */
+function ordDictar(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition, b=document.getElementById('ord-mic');
+  if(!SR){ toast('Este navegador no permite dictar. Use el micrófono del teclado del celular.',true); return; }
+  if(ORD.rec){ ORD.rec.stop(); return; }
+  const r=new SR(); r.lang='es-MX'; r.interimResults=true; r.continuous=false;
+  const t=document.getElementById('ord-txt'), base=t.value?t.value+' ':'';
+  r.onresult=e=>{ let s=''; for(const x of e.results) s+=x[0].transcript; t.value=base+s; };
+  r.onend=()=>{ ORD.rec=null; b.classList.remove('on'); };
+  r.onerror=()=>{ ORD.rec=null; b.classList.remove('on'); };
+  ORD.rec=r; b.classList.add('on'); r.start();
+}
+
+/* ---- llamadas ---- */
+function ordSesionVigente(){
+  try{ const j=JSON.parse(atob(ID_TOKEN.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); return Number(j.exp||0)*1000>Date.now()+30000; }catch(e){ return false; }
+}
+async function agendaApi(action, payload){
+  if(!ordSesionVigente()) throw new Error('Su sesión de Google ya venció (dura una hora). Recargue Augusta y vuelva a entrar; la conversación se reinicia.');
+  const r=await fetch(AGENDA_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:ID_TOKEN,payload:payload||{}})});
+  const j=await r.json();
+  if(j&&j.ok===false&&(j.error==='NO_AUTH'||j.error==='NO_AUTORIZADO'))
+    throw new Error('La app de agenda no reconoce esta cuenta de Google. Entre a Augusta con la misma cuenta con la que usa la agenda.');
+  return j;
+}
+async function augustaPost(body){
+  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({id_token:ID_TOKEN},body))});
+  return r.json();
+}
+async function ordContexto(){
+  if(ORD.ctx) return ORD.ctx;
+  const b=await agendaApi('bootstrap',{});
+  if(!b||!b.cal) throw new Error('No pude leer la configuración de la agenda.');
+  ORD.cal=b.cal;
+  const cat=b.catalogs||{};
+  ORD.autorizador=((cat.autorizadores||[]).filter(a=>/soto/i.test(a))[0])||'';
+  ORD.ctx={ procedimientos:b.procedimientos||[], procedimientosInyectables:b.procedimientosInyectables||cat.procIny||[],
+    operativos:(cat.operativos||cat.medicos||[]).filter(o=>!/karen|fernando\s+islas/i.test(o)) };
+  return ORD.ctx;
+}
+
+/* ---- conversación ---- */
+async function ordEnviar(ev){
+  if(ev) ev.preventDefault();
+  if(ORD.ocupado) return;
+  const t=document.getElementById('ord-txt'), txt=t.value.trim();
+  if(!txt) return;
+  t.value=''; document.getElementById('ord-ej').style.display='none';
+  ordPinta('yo',txt);
+  ORD.msgs.push({role:'user',content:txt});
+  await ordCiclo();
+}
+function ordRecorta(){
+  // Conserva la conversación reciente sin partir un par herramienta/resultado.
+  while(ORD.msgs.length>40){
+    ORD.msgs.shift();
+    while(ORD.msgs.length && (ORD.msgs[0].role!=='user' || typeof ORD.msgs[0].content!=='string')) ORD.msgs.shift();
+  }
+}
+async function ordCiclo(){
+  ordBloquea(true);
+  try{
+    if(!ordSesionVigente()) throw new Error('Su sesión de Google ya venció (dura una hora). Recargue Augusta y vuelva a entrar.');
+    const ctx=await ordContexto();
+    for(let vuelta=0; vuelta<12; vuelta++){
+      ordRecorta(); ordPensando(true);
+      const r=await augustaPost({accion:'chat',mensajes:ORD.msgs,contexto:ctx});
+      ordPensando(false);
+      if(!r || r.error){
+        if(r && r.error==='falta_llave') ordPinta('aug err','Todavía no tengo la llave de la API de Claude. En cuanto la pegue en mi servidor, le contesto.');
+        else ordPinta('aug err','No pude procesar la orden: '+((r&&(r.mensaje||r.error))||'sin respuesta'));
+        // Deshace la orden a medias para que la conversación quede válida y se pueda repetir.
+        while(ORD.msgs.length && !(ORD.msgs[ORD.msgs.length-1].role==='user' && typeof ORD.msgs[ORD.msgs.length-1].content==='string')) ORD.msgs.pop();
+        ORD.msgs.pop(); return;
+      }
+      ORD.msgs.push({role:'assistant',content:r.content});
+      r.content.filter(c=>c.type==='text'&&c.text.trim()).forEach(c=>ordPinta('aug',c.text.trim()));
+      const usos=r.content.filter(c=>c.type==='tool_use');
+      if(!usos.length) return;
+      const resultados=[];
+      for(const u of usos){
+        let salida;
+        try{ salida=await ordHerramienta(u.name,u.input||{}); }
+        catch(e){ salida={ok:false,error:String(e.message||e)}; }
+        resultados.push({type:'tool_result',tool_use_id:u.id,content:JSON.stringify(salida).slice(0,12000)});
+      }
+      ORD.msgs.push({role:'user',content:resultados});
+    }
+  }catch(e){ ordPensando(false); ordPinta('aug err',String(e.message||e));
+    while(ORD.msgs.length && !(ORD.msgs[ORD.msgs.length-1].role==='user' && typeof ORD.msgs[ORD.msgs.length-1].content==='string')) ORD.msgs.pop();
+    ORD.msgs.pop(); }
+  finally{ ordPensando(false); ordBloquea(false); }
+}
+
+/* ---- herramientas ---- */
+function ordPac(id){ return ORD.pacientes[String(id||'')]; }
+async function ordHerramienta(nombre, x){
+  if(nombre==='buscar_paciente'){
+    const m=await agendaApi('search',{query:String(x.texto||'')});
+    const lista=Array.isArray(m)?m:((m&&m.matches)||[]);
+    lista.forEach(p=>{ ORD.pacientes[String(p.id)]=p; });
+    return {encontrados:lista.length, pacientes:lista.slice(0,8).map(p=>({id:p.id,nombre:p.nombre,telefono:p.telefono,nacimiento:p.nacimiento||'',residencia:p.residencia||''}))};
+  }
+  if(nombre==='ver_agenda_dia'){
+    const c=ORD.cal, ids=[c.consulta.id,c.cirugias.id,c.cabina1.id,c.cabina2.id];
+    const l=await agendaApi('daySchedule',{calIds:ids,date:String(x.fecha||'')});
+    const ev=(Array.isArray(l)?l:[]).map(e=>({agenda:e.cal,inicio:e.ini,fin:e.fin,titulo:String(e.title||'').slice(0,140),bloqueo:!!e.bloqueo}));
+    return {fecha:x.fecha, eventos:ev};
+  }
+  if(nombre==='citas_de_paciente'){
+    const p=ordPac(x.paciente_id); if(!p) return {ok:false,error:'Primero busque al paciente con buscar_paciente.'};
+    const r=await agendaApi('findCitas',{pacienteId:p.id,nombre:p.nombre,telefono:p.telefono});
+    if(!r||!r.ok) return {ok:false,error:(r&&r.error)||'No pude leer sus citas.'};
+    return {citas:(r.citas||[]).map(c=>({calId:c.calId,eventId:c.eventId,fecha:c.fecha,hora:c.hora,fin:c.horaFin,agenda:c.linea,descripcion:c.descripcion,operativo:c.operativo,estatus:c.estatus,cancelada:!!c.cancelada,etapa_de_cirugia:c.etapa||''}))};
+  }
+  if(nombre==='proponer_cita') return ordTarjetaCita(x);
+  if(nombre==='proponer_reagendar') return ordTarjetaReagendar(x);
+  if(nombre==='proponer_cancelar') return ordTarjetaCancelar(x);
+  return {ok:false,error:'Herramienta desconocida.'};
+}
+
+/* Tarjeta de confirmación: devuelve una promesa que se resuelve cuando el doctor decide. */
+function ordTarjeta(etiqueta, titulo, filas, textoBoton, ejecutar){
+  return new Promise(resolve=>{
+    const log=document.getElementById('ord-log'), d=document.createElement('div');
+    d.className='ord-card';
+    d.innerHTML='<div class="k">'+esc(etiqueta)+'</div><div class="t">'+esc(titulo)+'</div><dl>'+
+      filas.filter(f=>f[1]).map(f=>'<dt>'+esc(f[0])+'</dt><dd>'+esc(f[1])+'</dd>').join('')+'</dl>'+
+      '<div class="acc"><button class="btn conf" data-a="si">'+esc(textoBoton)+'</button><button class="btn sec" data-a="no">No, cancelar</button></div><div class="res"></div>';
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
+    const acc=d.querySelector('.acc'), res=d.querySelector('.res');
+    const intenta=async(override)=>{
+      acc.querySelectorAll('button').forEach(b=>b.disabled=true);
+      res.className='res'; res.textContent='Escribiendo en la agenda…';
+      let r; try{ r=await ejecutar(override); }catch(e){ r={ok:false,error:String(e.message||e)}; }
+      if(r && r.ok){
+        d.classList.add('hecha'); acc.remove(); res.className='res ok'; res.textContent='✓ '+(r.mensaje||'Hecho.');
+        resolve(Object.assign({ok:true},r.paraAugusta||{})); return;
+      }
+      // Anticipo o empalme: el doctor puede autorizarlo aquí mismo.
+      const puede=(r&&r.error==='SIN_ANTICIPO'&&r.canOverrideAnticipo)||(r&&r.choques&&r.canOverride);
+      res.className='res bad';
+      res.textContent=ordExplica(r);
+      if(puede && ORD.autorizador && !override){
+        acc.innerHTML='<button class="btn" data-a="aut">Lo autorizo, agéndala</button><button class="btn sec" data-a="no">Dejarlo así</button>';
+        acc.querySelector('[data-a="aut"]').onclick=()=>intenta(r.error==='SIN_ANTICIPO'
+          ?{anticipoAutorizadoPor:ORD.autorizador,anticipoMotivo:'Orden del doctor vía Augusta'}
+          :{autorizadoPor:ORD.autorizador,motivo:'Orden del doctor vía Augusta'});
+        acc.querySelector('[data-a="no"]').onclick=()=>{ d.classList.add('anulada'); acc.remove(); resolve({ok:false,error:ordExplica(r),decision:'el doctor no lo autorizó'}); };
+        return;
+      }
+      acc.remove(); resolve({ok:false,error:ordExplica(r)});
+    };
+    acc.querySelector('[data-a="si"]').onclick=()=>intenta(null);
+    acc.querySelector('[data-a="no"]').onclick=()=>{ d.classList.add('anulada'); acc.remove(); res.textContent='No se hizo.'; resolve({ok:false,decision:'el doctor la rechazó; pregúntale qué cambiar'}); };
+  });
+}
+function ordExplica(r){
+  if(!r) return 'Sin respuesta de la agenda.';
+  if(r.faltantes) return 'Faltan datos: '+r.faltantes.join(', ')+'.';
+  if(r.error==='SIN_ANTICIPO') return (r.agotado?'El anticipo ya se usó en otra cita.':'No hay anticipo verificado en cobros para esta cita.')+(r.detalle?' '+r.detalle:'');
+  if(r.choques) return 'Choca con: '+r.choques.map(c=>c.when+' ('+c.calendar+'): '+(c.hits||[]).join('; ')).join(' · ');
+  return String(r.error||r.mensaje||'La agenda no aceptó el cambio.');
+}
+function ordFecha(f,h){ try{ const d=new Date(f+'T12:00:00'); return d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})+(h?' · '+h:''); }catch(e){ return f+' '+(h||''); } }
+
+async function ordTarjetaCita(x){
+  const p=ordPac(x.paciente_id); if(!p) return {ok:false,error:'Primero busque al paciente con buscar_paciente.'};
+  const iny=x.tipo==='inyectables';
+  const campos={ tipo_px:x.tipo_px, nombre:p.nombre, telefono:p.telefono, medico:iny?(x.operativo||''):'Dr. Miguel Soto',
+    modalidad:iny?'Presencial':(x.modalidad||'Presencial'), sede:x.sede||'Renasté', motivo:x.motivo,
+    fecha:x.fecha, hora:x.hora, duracion:String(x.duracion||(iny?30:(/valoraci/i.test(x.motivo)?60:30))),
+    observaciones:x.observaciones||'', prospecta:'NA', cierra:'NA' };
+  if(iny){ Object.assign(campos,{cabina:x.cabina||'', procedimiento:x.procedimiento||'', anestesia:'Local', msi:'NA'}); }
+  else { Object.assign(campos,{interes:x.interes||'', correo:p.correo||'', nacimiento:p.nacimiento||'', residencia:p.residencia||'', fotos:x.fotos||'No aplica'}); }
+  const cal=iny?(campos.cabina==='Cabina 2'?ORD.cal.cabina2.id:ORD.cal.cabina1.id):ORD.cal.consulta.id;
+  return ordTarjeta(iny?'Nueva cita · inyectables':'Nueva cita · consulta', p.nombre, [
+    ['Cuándo',ordFecha(x.fecha,x.hora)+' · '+campos.duracion+' min'],['Motivo',x.motivo],
+    ['Procedimiento',iny?campos.procedimiento:campos.interes],['Paciente',campos.tipo_px],['Teléfono',p.telefono],
+    ['Sede',campos.sede+(iny?' · '+campos.cabina:'')+' · '+campos.modalidad],['Atiende',campos.medico],
+    ['Fotos',iny?'':campos.fotos],['Notas',campos.observaciones]
+  ], 'Confirmar y agendar', async override=>{
+    const r=await agendaApi('create',{tipo:iny?'inyectables':'consulta',paciente:p,campos,override:override||null,cotizacion:null});
+    if(!r||!r.ok) return r;
+    try{ await augustaGet({accion:'marcar_augusta',que:'agendo',cal,fecha:x.fecha,hora:x.hora,paciente:p.nombre}); }catch(e){}
+    return {ok:true,mensaje:'Agendada'+(r.empalme?' (empalme autorizado)':'')+(r.anticipo?' · anticipo '+r.anticipo:'')+'. En la agenda dice que la agendó Augusta por orden suya.',
+      paraAugusta:{agendada:true,aviso:r.aviso||''}};
+  });
+}
+async function ordTarjetaReagendar(x){
+  const p=ordPac(x.paciente_id)||{nombre:'la paciente'};
+  return ordTarjeta('Reagendar', p.nombre, [['Hoy',x.resumen_actual],['Nueva',ordFecha(x.fecha,x.hora)+(x.duracion?' · '+x.duracion+' min':'')]],
+    'Confirmar cambio', async override=>{
+      const q={calId:x.calId,eventId:x.eventId,fecha:x.fecha,hora:x.hora,override:override||null}; if(x.duracion) q.dur=x.duracion;
+      const r=await agendaApi('reschedule',q);
+      if(!r||!r.ok) return r;
+      try{ await augustaGet({accion:'marcar_augusta',que:'reagendo',cal:x.calId,fecha:x.fecha,hora:x.hora,paciente:p.nombre}); }catch(e){}
+      return {ok:true,mensaje:'Reagendada a '+(r.when||ordFecha(x.fecha,x.hora))+'.',paraAugusta:{reagendada:true}};
+    });
+}
+async function ordTarjetaCancelar(x){
+  const p=ordPac(x.paciente_id)||{nombre:'la paciente'};
+  return ordTarjeta('Cancelar cita', p.nombre, [['Cita',x.resumen_actual],['Motivo',x.motivo||'']], 'Confirmar cancelación', async()=>{
+    const r=await agendaApi('cancelCita',{calId:x.calId,eventId:x.eventId,motivo:(x.motivo?x.motivo+' · ':'')+'por orden del doctor vía Augusta'});
+    if(!r||!r.ok) return r;
+    return {ok:true,mensaje:'Cancelada.',paraAugusta:{cancelada:true}};
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(e.target&&e.target.id==='ord-txt'&&e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); ordEnviar(); }
+});
 
 window.onGoogleSignIn = function(resp){
   ID_TOKEN = (resp && resp.credential) ? resp.credential : "";
