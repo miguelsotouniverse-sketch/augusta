@@ -722,16 +722,32 @@ const MOTIVOS={
   cirugias:['No es una cirugía','Se canceló / ya no va','No lleva anestesiólogo (anestesia local)','Se resolvió en la app de la clínica','Otro']
 };
 const EXCLUYE_ANE='No se realizó el procedimiento';
-function augustaGet(params){
+/* Transporte al servidor de Augusta. Primero JSONP (<script>); si el navegador lo bloquea
+   (pasa en Safari de iPhone), usa fetch normal y se queda con fetch el resto de la sesión. */
+let TRANSPORTE = 'jsonp', ULTIMO_FALLO = '';
+function viaFetch_(qs){
+  return fetch(API_URL+'?'+qs+'&t='+Date.now(),{credentials:'omit',cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(t=>{ try{ return JSON.parse(t); }catch(e){ throw new Error('respuesta no es JSON: '+t.slice(0,60)); } });
+}
+function viaJsonp_(qs){
   return new Promise((ok,mal)=>{
-    const cb='__augustac'+Date.now()+Math.floor(Math.random()*1e4);
-    window[cb]=j=>{ delete window[cb]; s.remove(); (j&&!j.error)?ok(j):mal(new Error((j&&j.error)||'Sin respuesta')); };
-    const q=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
-    const s=document.createElement('script');
-    s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&'+q+'&callback='+cb+'&t='+Date.now();
-    s.onerror=()=>{ delete window[cb]; mal(new Error('No se pudo conectar con Augusta')); };
+    const cb='__augustac'+Date.now()+Math.floor(Math.random()*1e4), s=document.createElement('script');
+    window[cb]=j=>{ delete window[cb]; s.remove(); ok(j); };
+    s.onerror=()=>{ delete window[cb]; s.remove(); mal(new Error('jsonp bloqueado')); };
+    s.src=API_URL+'?'+qs+'&callback='+cb+'&t='+Date.now();
     document.head.appendChild(s);
   });
+}
+function llamaAugusta(qs){
+  if(TRANSPORTE==='fetch') return viaFetch_(qs).catch(e=>{ ULTIMO_FALLO='fetch: '+e.message; throw new Error('No se pudo conectar con Augusta'); });
+  return viaJsonp_(qs).catch(e1=>viaFetch_(qs).then(j=>{ TRANSPORTE='fetch'; return j; },
+    e2=>{ ULTIMO_FALLO='jsonp: '+e1.message+' · fetch: '+e2.message; throw new Error('No se pudo conectar con Augusta'); }));
+}
+function augustaGet(params){
+  const q=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
+  return llamaAugusta('id_token='+encodeURIComponent(ID_TOKEN)+'&'+q)
+    .then(j=>{ if(j&&!j.error) return j; throw new Error((j&&j.error)||'Sin respuesta'); });
 }
 function abreCorreccion(cont,item,modo){
   document.querySelectorAll('.corr-panel').forEach(p=>{ const r=p.closest('tr.corr-row'); (r||p).remove(); });
@@ -795,19 +811,16 @@ function eligeDia(dia,forzar){
   DIA_CARGANDO=true; pintaBarras();
   document.getElementById('f-faltan').innerHTML='<tr><td colspan="4" class="hint">Revisando '+fc(DIA_SEL)+'…</td></tr>';
   document.getElementById('e-mal').innerHTML='<tr><td colspan="4" class="hint">Revisando '+fc(DIA_SEL)+'…</td></tr>';
-  const pedido=DIA_SEL, cb='__augustadia'+Date.now();
-  window[cb]=function(json){
-    delete window[cb];
+  const pedido=DIA_SEL;
+  const alLlegar=function(json){
     if(pedido!==DIA_SEL) return;               // el doctor ya eligió otro día
     DIA_CARGANDO=false;
     if(!json||json.error){ DIA_DATA={errores:[(json&&json.error)||'sin respuesta']}; }
     else DIA_DATA=json;
     pintaBarras(); renderFotos(); renderExpediente();
   };
-  const s=document.createElement('script');
-  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&dia='+pedido+(forzar?'&refrescar=1':'')+'&callback='+cb+'&t='+Date.now();
-  s.onerror=()=>{ if(pedido!==DIA_SEL) return; DIA_CARGANDO=false; DIA_DATA={errores:['No se pudo conectar con Augusta']}; pintaBarras(); renderFotos(); renderExpediente(); };
-  document.head.appendChild(s);
+  llamaAugusta('id_token='+encodeURIComponent(ID_TOKEN)+'&dia='+pedido+(forzar?'&refrescar=1':''))
+    .then(alLlegar, ()=>{ if(pedido!==DIA_SEL) return; DIA_CARGANDO=false; DIA_DATA={errores:['No se pudo conectar con Augusta']}; pintaBarras(); renderFotos(); renderExpediente(); });
 }
 document.querySelectorAll('.diabar').forEach(b=>{
   b.querySelector('[data-acc=ventana]').onclick=()=>eligeDia('');
@@ -939,23 +952,14 @@ function cargar(refrescar,silencioso){
   if(API_URL.indexOf('__PEGAR')===0){
     document.getElementById('alertas').innerHTML='<div class="empty">Falta la URL del API.</div>'; return;
   }
-  window.__augustacb = function(json){ try{ pintar(json); }catch(e){
-    document.getElementById('alertas').innerHTML='<div class="empty">Error al procesar los datos.</div>'; } };
-  const s=document.createElement('script');
-  s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&callback=__augustacb'+(refrescar?'&refrescar=1':'')+'&t='+Date.now();
   const t0=Date.now();
-  s.onerror=()=>{
+  llamaAugusta('id_token='+encodeURIComponent(ID_TOKEN)+(refrescar?'&refrescar=1':'')).then(json=>{
+    try{ pintar(json); }catch(e){ document.getElementById('alertas').innerHTML='<div class="empty">Error al procesar los datos.</div>'; }
+  }, ()=>{
     const seg=Math.round((Date.now()-t0)/1000);
-    document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div><div class="hint" id="diag" style="text-align:center">Revisando por qué…</div>';
-    // Diagnóstico: ¿el servidor responde siquiera? Así se sabe si es bloqueo del navegador o la carga del tablero.
-    const cb='__diag'+Date.now(), p=document.createElement('script'), t1=Date.now();
-    const pinta=t=>{ const d=document.getElementById('diag'); if(d) d.textContent=t; };
-    window[cb]=j=>{ delete window[cb]; p.remove(); pinta('Diagnóstico: el servidor sí responde ('+(Date.now()-t1)+' ms); la carga del tablero falló a los '+seg+' s. Navegador: '+navigator.userAgent.slice(0,90)); };
-    p.onerror=()=>{ delete window[cb]; pinta('Diagnóstico: este navegador no llega al servidor de Augusta (falló a los '+seg+' s; la prueba también falló). Navegador: '+navigator.userAgent.slice(0,90)); };
-    p.src=API_URL+'?ping=1&callback='+cb+'&t='+Date.now();
-    document.head.appendChild(p);
-  };
-  document.head.appendChild(s);
+    document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div>'+
+      '<div class="hint" style="text-align:center">Diagnóstico: falló a los '+seg+' s ('+esc(ULTIMO_FALLO)+'). Navegador: '+esc(navigator.userAgent.slice(0,90))+'</div>';
+  });
 }
 
 /* =================================================================
