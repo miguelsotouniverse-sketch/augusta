@@ -943,7 +943,18 @@ function cargar(refrescar,silencioso){
     document.getElementById('alertas').innerHTML='<div class="empty">Error al procesar los datos.</div>'; } };
   const s=document.createElement('script');
   s.src=API_URL+'?id_token='+encodeURIComponent(ID_TOKEN)+'&callback=__augustacb'+(refrescar?'&refrescar=1':'')+'&t='+Date.now();
-  s.onerror=()=>{ document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div>'; };
+  const t0=Date.now();
+  s.onerror=()=>{
+    const seg=Math.round((Date.now()-t0)/1000);
+    document.getElementById('alertas').innerHTML='<div class="empty">No se pudo conectar con Augusta. Intenta recargar.</div><div class="hint" id="diag" style="text-align:center">Revisando por qué…</div>';
+    // Diagnóstico: ¿el servidor responde siquiera? Así se sabe si es bloqueo del navegador o la carga del tablero.
+    const cb='__diag'+Date.now(), p=document.createElement('script'), t1=Date.now();
+    const pinta=t=>{ const d=document.getElementById('diag'); if(d) d.textContent=t; };
+    window[cb]=j=>{ delete window[cb]; p.remove(); pinta('Diagnóstico: el servidor sí responde ('+(Date.now()-t1)+' ms); la carga del tablero falló a los '+seg+' s. Navegador: '+navigator.userAgent.slice(0,90)); };
+    p.onerror=()=>{ delete window[cb]; pinta('Diagnóstico: este navegador no llega al servidor de Augusta (falló a los '+seg+' s; la prueba también falló). Navegador: '+navigator.userAgent.slice(0,90)); };
+    p.src=API_URL+'?ping=1&callback='+cb+'&t='+Date.now();
+    document.head.appendChild(p);
+  };
   document.head.appendChild(s);
 }
 
