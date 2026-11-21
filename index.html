@@ -422,6 +422,7 @@
       <button type="button" onclick="ordEjemplo(this)">¿Qué tengo mañana?</button>
       <button type="button" onclick="ordEjemplo(this)">Agenda una valoración</button>
       <button type="button" onclick="ordEjemplo(this)">Reagenda una cita</button>
+      <button type="button" onclick="ordEjemplo(this)">Da de alta una paciente nueva</button>
     </div>
   </div>
 </aside>
@@ -974,7 +975,7 @@ function ordAbrir(){
   document.getElementById('ord-panel').classList.add('on');
   document.getElementById('ord-fab').style.display='none';
   if(!document.getElementById('ord-log').children.length)
-    ordPinta('aug','Dígame qué necesita. Puedo agendar consultas e inyectables, reagendar, cancelar y decirle qué hay en la agenda de cualquier día. Antes de escribir en la agenda le muestro la cita para que usted la confirme.');
+    ordPinta('aug','Dígame qué necesita. Puedo dar de alta pacientes nuevos, agendar consultas e inyectables, reagendar, cancelar y decirle qué hay en la agenda de cualquier día. Antes de escribir nada le muestro lo que voy a hacer para que usted lo confirme.');
   setTimeout(()=>document.getElementById('ord-txt').focus(),50);
 }
 function ordCerrar(){ document.getElementById('ord-panel').classList.remove('on'); document.getElementById('ord-fab').style.display=''; }
