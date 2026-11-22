@@ -211,6 +211,15 @@
   .ord-ej button:hover{border-color:var(--taupe);color:var(--negro)}
   .ord-pensando{align-self:flex-start;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--ink-soft)}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  /* ---- Cobros ---- */
+  .cob-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+  .cob-bar .sel{width:auto}
+  tr.cob-ver td{background:rgba(176,122,40,.07)}
+  .cob-dr{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--taupe);margin-left:6px}
+  .cob-ed{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--crema);border:1px solid var(--line);padding:12px}
+  .cob-ed input,.cob-ed select{font-family:'Jost';font-size:13px;padding:8px 10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .cob-ed input[type=number]{width:130px}.cob-ed .nota{flex:1;min-width:200px}
+  .cob-aviso{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-left:3px solid var(--dormido);background:var(--paper);padding:14px 18px;margin-bottom:22px;font-size:13.5px}
 </style>
 </head>
 <body>
@@ -244,6 +253,7 @@
     <button class="tab" data-view="expediente">Expediente</button>
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
+    <button class="tab" data-view="cobros">Cobros<span class="n" id="cob-n"></span></button>
     <button class="btn-ref" id="btn-revisar" style="margin-left:auto;align-self:center" onclick="revisarAhora()" title="Augusta vuelve a revisar todas las fuentes en este momento">↻ Revisar ahora</button>
   </div>
 </div></header>
@@ -258,6 +268,7 @@
 
   <!-- HOY -->
   <section class="view on" id="v-hoy">
+    <div id="cob-aviso"></div>
     <div id="decisiones"></div>
     <div class="sec-lab">Vigilancia</div>
     <div class="fuentes" id="fuentes"></div>
@@ -400,6 +411,23 @@
     <div class="block">
       <div class="sec-lab">Operadas sin primera cita postoperatoria</div>
       <div id="t-post"></div>
+    </div>
+  </section>
+
+  <!-- COBROS -->
+  <section class="view" id="v-cobros">
+    <div class="block">
+      <div class="sec-lab">Cuánto cobrar y en qué terminal</div>
+      <div class="cob-bar">
+        <button class="btn sec" onclick="cobMover(-1)" aria-label="Día anterior">‹</button>
+        <input type="date" class="sel" id="cob-fecha" onchange="cobCargar(this.value)">
+        <button class="btn sec" onclick="cobMover(1)" aria-label="Día siguiente">›</button>
+        <button class="btn sec" onclick="cobCargar(hoyISO())">Hoy</button>
+        <button class="btn sec" onclick="cobCargar(sumaDia(hoyISO(),1))">Mañana</button>
+      </div>
+      <div class="kpis" id="cob-kpis"></div>
+      <div class="tscroll"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Concepto</th><th>Terminal</th><th class="r">Cobrar</th><th>Cómo se calculó</th><th></th></tr></thead><tbody id="t-cob"><tr><td colspan="7" class="hint">Elija un día.</td></tr></tbody></table></div>
+      <div class="hint">Es el mismo «Pronóstico de cobros» que ve recepción en la agenda. Lo que usted fije con «Ajustar» manda sobre el cálculo y recepción lo ve marcado «✍️ Indicación del Dr. Soto». «Verificar» = el sistema no pudo calcularlo (sin precio o sin cotización ligada).</div>
     </div>
   </section>
 
@@ -837,6 +865,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   t.classList.add('on');
   document.getElementById('v-'+t.dataset.view).classList.add('on');
+  if(t.dataset.view==='cobros' && !COB.fecha) cobCargar(sumaDia(hoyISO(),1));
 });
 
 /* ---- HOY: alertas ---- */
@@ -944,6 +973,7 @@ function pintar(json){
   }).join('')+'<button class="btn-ref" id="btn-ref">Actualizar</button>';
   document.getElementById('btn-ref').onclick=()=>cargar(true);
   renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); pintaBarras(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
+  if(!COB.avisado){ COB.avisado=true; cobAviso(); }
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
   const br=document.getElementById('btn-revisar'); if(br){ br.textContent='↻ Revisar ahora'; br.title='Revisado por última vez: '+DATA.generado; }
 }
@@ -962,6 +992,84 @@ function cargar(refrescar,silencioso){
       '<div class="hint" style="text-align:center">Diagnóstico: falló a los '+seg+' s ('+esc(ULTIMO_FALLO)+'). Navegador: '+esc(navigator.userAgent.slice(0,90))+'</div>';
   });
 }
+
+/* =================================================================
+   COBROS — pronóstico de la agenda + indicaciones del doctor
+   ================================================================= */
+const COB={fecha:'',citas:[],cargando:false};
+const TERM={Dr:'Dr. Miguel Soto','Renasté':'Renasté',split:'Dr + Renasté'};
+function cobMover(n){ cobCargar(sumaDia(COB.fecha||sumaDia(hoyISO(),1),n)); }
+async function cobCargar(f){
+  if(!f) return;
+  COB.fecha=f; document.getElementById('cob-fecha').value=f;
+  document.getElementById('t-cob').innerHTML='<tr><td colspan="7" class="hint">Consultando la agenda y el sistema de cobros de '+fc(f)+'… (unos 30 s)</td></tr>';
+  document.getElementById('cob-kpis').innerHTML='';
+  try{
+    const r=await augustaGet({accion:'cobros',fecha:f});
+    if(COB.fecha!==f) return;
+    COB.citas=r.citas||[]; cobPintar(r.totales||{});
+  }catch(e){ if(COB.fecha===f) document.getElementById('t-cob').innerHTML='<tr><td colspan="7" class="hint">No se pudo leer el pronóstico: '+esc(e.message)+'</td></tr>'; }
+}
+function cobPintar(t){
+  const C=COB.citas, ver=C.filter(c=>c.cargoLlegada==null).length, aj=C.filter(c=>c.ajustado).length;
+  document.getElementById('cob-kpis').innerHTML=
+    `<div class="kpi"><div class="lab">Citas</div><div class="val">${C.length}</div></div>`+
+    `<div class="kpi"><div class="lab">Por verificar</div><div class="val">${ver}${aj?` <small>· ${aj} fijadas por usted</small>`:''}</div></div>`+
+    `<div class="kpi"><div class="lab">Terminal Dr.</div><div class="val">${mxn(t.dr)}</div></div>`+
+    `<div class="kpi"><div class="lab">Terminal Renasté</div><div class="val">${mxn(t.renaste)}</div></div>`;
+  document.getElementById('t-cob').innerHTML=C.length?C.map((c,i)=>{
+    const monto=c.cargoLlegada==null?'<span class="badge b-ambar">verificar</span>':mxn(c.cargoLlegada);
+    const desg=(c.desglose&&c.desglose.length>1)?'<span class="sm">'+c.desglose.map(d=>esc(TERM[d.terminal]||d.terminal)+' '+mxn(d.monto)).join(' · ')+'</span>':'';
+    return `<tr id="cob-r${i}" class="${c.cargoLlegada==null?'cob-ver':''}"${c.gris&&!c.ajustado?' style="opacity:.6"':''}>
+      <td>${esc(c.hora||'—')}</td><td class="nm">${esc(c.nombrePaciente||'—')}</td><td>${esc(c.concepto||'—')}</td>
+      <td>${esc(TERM[c.terminal]||c.terminal||'—')}${c.ajustado?'<span class="cob-dr">✍️ usted</span>':''}</td>
+      <td class="r">${monto}${desg}</td><td><span class="sm">${esc(c.nota||'')}</span></td>
+      <td><button class="btn sec" onclick="cobEditar(${i})">Ajustar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="hint">No hay citas con cobro ese día.</td></tr>';
+}
+function cobEditar(i){
+  document.querySelectorAll('tr.cob-edrow').forEach(r=>r.remove());
+  const c=COB.citas[i], tr=document.getElementById('cob-r'+i), fila=document.createElement('tr');
+  fila.className='cob-edrow';
+  const t=c.terminal||'Dr', d=(c.desglose||[]), dDr=(d.find(x=>x.terminal==='Dr')||{}).monto, dRen=(d.find(x=>x.terminal==='Renasté')||{}).monto;
+  fila.innerHTML=`<td colspan="7"><div class="cob-ed">
+    <select id="cob-t">${Object.keys(TERM).map(k=>`<option value="${k}" ${k===t?'selected':''}>${k==='split'?'Dividir entre las dos':'Terminal '+TERM[k]}</option>`).join('')}</select>
+    <input type="number" min="0" step="1" id="cob-m" placeholder="Monto" value="${c.cargoLlegada!=null&&t!=='split'?c.cargoLlegada:''}">
+    <input type="number" min="0" step="1" id="cob-md" placeholder="Terminal Dr." value="${dDr||''}">
+    <input type="number" min="0" step="1" id="cob-mr" placeholder="Terminal Renasté" value="${dRen||''}">
+    <input type="text" class="nota" id="cob-no" maxlength="300" placeholder="Indicación para recepción (opcional), p. ej. «ya pagó el resto por transferencia»">
+    <button class="btn" id="cob-ok">Guardar</button>
+    ${c.ajustado?'<button class="btn sec" id="cob-del">Quitar mi indicación</button>':''}
+    <button class="btn sec" id="cob-x">Cancelar</button></div></td>`;
+  tr.after(fila);
+  const sync=()=>{ const sp=document.getElementById('cob-t').value==='split';
+    document.getElementById('cob-m').style.display=sp?'none':''; document.getElementById('cob-md').style.display=sp?'':'none'; document.getElementById('cob-mr').style.display=sp?'':'none'; };
+  document.getElementById('cob-t').onchange=sync; sync();
+  document.getElementById('cob-x').onclick=()=>fila.remove();
+  const enviar=async(borrar)=>{
+    const term=document.getElementById('cob-t').value, q={accion:'cobro_ajustar',fecha:COB.fecha,clave:c.clave,paciente:c.nombrePaciente||'',hora:c.hora||'',terminal:term,nota:document.getElementById('cob-no').value.trim()};
+    if(borrar) q.borrar='1';
+    else if(term==='split'){ q.montoDr=document.getElementById('cob-md').value; q.montoRen=document.getElementById('cob-mr').value; if(!(+q.montoDr>0&&+q.montoRen>0)){ toast('Ponga cuánto va a cada terminal',true); return; } }
+    else { q.monto=document.getElementById('cob-m').value; if(q.monto===''){ toast('Ponga el monto (0 si no se cobra)',true); return; } }
+    fila.querySelectorAll('button').forEach(b=>b.disabled=true);
+    try{ await augustaGet(q); toast(borrar?'Indicación quitada':'Listo: recepción ya lo ve en el pronóstico'); cobCargar(COB.fecha); }
+    catch(e){ fila.querySelectorAll('button').forEach(b=>b.disabled=false); toast(e.message,true); }
+  };
+  document.getElementById('cob-ok').onclick=()=>enviar(false);
+  const del=document.getElementById('cob-del'); if(del) del.onclick=()=>enviar(true);
+}
+/* Aviso en HOY: cuántas citas de mañana no tienen monto definido. */
+async function cobAviso(){
+  const f=sumaDia(hoyISO(),1);
+  try{
+    const r=await augustaGet({accion:'cobros',fecha:f});
+    const ver=(r.citas||[]).filter(c=>c.cargoLlegada==null);
+    document.getElementById('cob-n').textContent=ver.length?' '+ver.length:'';
+    document.getElementById('cob-aviso').innerHTML=ver.length?`<div class="cob-aviso"><div><b>Cobros de mañana:</b> ${ver.length} ${ver.length===1?'cita no tiene':'citas no tienen'} monto definido (${ver.map(c=>esc((c.nombrePaciente||'').split(' ').slice(0,2).join(' '))).join(', ')}). Recepción no sabría cuánto cobrar.</div><button class="btn" onclick="cobIr('${f}')">Revisar</button></div>`:'';
+    if(!COB.fecha){ COB.fecha=f; COB.citas=r.citas||[]; document.getElementById('cob-fecha').value=f; cobPintar(r.totales||{}); }
+  }catch(e){}
+}
+function cobIr(f){ document.querySelector('.tab[data-view=cobros]').click(); if(COB.fecha!==f) cobCargar(f); }
 
 /* =================================================================
    ÓRDENES A AUGUSTA
