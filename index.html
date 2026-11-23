@@ -451,6 +451,7 @@
       <button type="button" onclick="ordEjemplo(this)">Agenda una valoración</button>
       <button type="button" onclick="ordEjemplo(this)">Reagenda una cita</button>
       <button type="button" onclick="ordEjemplo(this)">Da de alta una paciente nueva</button>
+      <button type="button" onclick="ordEjemplo(this)">Cotízale a una paciente</button>
     </div>
   </div>
 </aside>
@@ -1083,7 +1084,7 @@ function ordAbrir(){
   document.getElementById('ord-panel').classList.add('on');
   document.getElementById('ord-fab').style.display='none';
   if(!document.getElementById('ord-log').children.length)
-    ordPinta('aug','Dígame qué necesita. Puedo dar de alta pacientes nuevos, agendar consultas e inyectables, reagendar, cancelar y decirle qué hay en la agenda de cualquier día. Antes de escribir nada le muestro lo que voy a hacer para que usted lo confirme.');
+    ordPinta('aug','Dígame qué necesita. Puedo dar de alta pacientes nuevos, armar o modificar cotizaciones, agendar consultas e inyectables, reagendar, cancelar y decirle qué hay en la agenda de cualquier día. Antes de escribir nada le muestro lo que voy a hacer para que usted lo confirme.');
   setTimeout(()=>document.getElementById('ord-txt').focus(),50);
 }
 function ordCerrar(){ document.getElementById('ord-panel').classList.remove('on'); document.getElementById('ord-fab').style.display=''; }
@@ -1145,8 +1146,11 @@ function ordTarjeta(c){
   d.className='ord-card';
   d.innerHTML='<div class="k">'+esc(c.etiqueta)+'</div><div class="t">'+esc(c.titulo)+'</div><dl>'+
     (c.filas||[]).map(f=>'<dt>'+esc(f[0])+'</dt><dd>'+esc(f[1])+'</dd>').join('')+'</dl>'+
-    '<div class="acc"><button class="btn conf" data-a="si">'+esc(c.boton)+'</button><button class="btn sec" data-a="no">No, cancelar</button></div><div class="res"></div>';
+    (c.enlace
+      ? '<div class="acc"><a class="btn conf" href="'+esc(c.enlace)+'" target="_blank" rel="noopener">'+esc(c.boton)+'</a></div><div class="res">Se abre en otra pestaña; ahí revisa el total y guarda.</div>'
+      : '<div class="acc"><button class="btn conf" data-a="si">'+esc(c.boton)+'</button><button class="btn sec" data-a="no">No, cancelar</button></div><div class="res"></div>');
   log.appendChild(d); log.scrollTop=log.scrollHeight;
+  if(c.enlace) return;
   const acc=d.querySelector('.acc'), res=d.querySelector('.res');
   const decide=async(decision)=>{
     if(ORD.ocupado) return;
