@@ -219,6 +219,25 @@
   .cob-ed{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--crema);border:1px solid var(--line);padding:12px}
   .cob-ed input,.cob-ed select{font-family:'Jost';font-size:13px;padding:8px 10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
   .cob-ed input[type=number]{width:130px}.cob-ed .nota{flex:1;min-width:200px}
+  /* ---- Comercial ---- */
+  .com-bars{display:flex;align-items:flex-end;gap:5px;height:130px;border-bottom:1px solid var(--line)}
+  .com-bar{flex:1;min-width:0;display:flex;flex-direction:column-reverse;height:100%;position:relative}
+  .com-bar i{display:block;width:100%}
+  .com-bar .tot{position:absolute;left:0;right:0;text-align:center;font-size:10.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .com-dias{display:flex;gap:5px;margin-top:6px}
+  .com-dias span{flex:1;min-width:0;text-align:center;font-size:10px;letter-spacing:.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden}
+  .com-ley{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--ink-soft);margin:12px 0 0}
+  .com-ley b{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+  .c-meta{background:var(--nuevo)}.c-google{background:var(--campeon)}.c-rec{background:var(--taupe)}.c-otros{background:var(--taupe-soft)}
+  .com-2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  @media(max-width:760px){.com-2{grid-template-columns:1fr}}
+  .com-sub{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);margin:22px 0 8px}
+  .cal{display:inline-block;min-width:34px;text-align:center;font-size:12px;padding:3px 6px;border:1px solid currentColor;font-variant-numeric:tabular-nums}
+  .cal.c1,.cal.c2{color:var(--riesgo)}.cal.c3{color:var(--dormido)}.cal.c4,.cal.c5{color:var(--campeon)}
+  .prob{display:block;font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .prob b{font-weight:500;color:var(--negro)}
+  th .sm{display:block;font-size:10px;letter-spacing:.5px;text-transform:none;font-weight:300;margin-top:2px}
+  details.com-det summary{cursor:pointer;font-size:12px;letter-spacing:.5px;color:var(--ink-soft);margin-top:12px}
   .cob-aviso{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-left:3px solid var(--dormido);background:var(--paper);padding:14px 18px;margin-bottom:22px;font-size:13.5px}
 </style>
 </head>
@@ -254,6 +273,7 @@
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
     <button class="tab" data-view="cobros">Cobros<span class="n" id="cob-n"></span></button>
+    <button class="tab" data-view="comercial">Comercial<span class="n" id="com-n"></span></button>
     <button class="btn-ref" id="btn-revisar" style="margin-left:auto;align-self:center" onclick="revisarAhora()" title="Augusta vuelve a revisar todas las fuentes en este momento">↻ Revisar ahora</button>
   </div>
 </div></header>
@@ -269,6 +289,7 @@
   <!-- HOY -->
   <section class="view on" id="v-hoy">
     <div id="cob-aviso"></div>
+    <div id="com-aviso"></div>
     <div id="decisiones"></div>
     <div class="sec-lab">Vigilancia</div>
     <div class="fuentes" id="fuentes"></div>
@@ -428,6 +449,40 @@
       <div class="kpis" id="cob-kpis"></div>
       <div class="tscroll"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Concepto</th><th>Terminal</th><th class="r">Cobrar</th><th>Cómo se calculó</th><th></th></tr></thead><tbody id="t-cob"><tr><td colspan="7" class="hint">Elija un día.</td></tr></tbody></table></div>
       <div class="hint">Es el mismo «Pronóstico de cobros» que ve recepción en la agenda. Lo que usted fije con «Ajustar» manda sobre el cálculo y recepción lo ve marcado «✍️ Indicación del Dr. Soto». «Verificar» = el sistema no pudo calcularlo (sin precio o sin cotización ligada).</div>
+    </div>
+  </section>
+
+  <!-- COMERCIAL -->
+  <section class="view" id="v-comercial">
+    <div class="kpis" id="com-kpis"></div>
+    <div class="block">
+      <div class="sec-lab">Lo que hay que atender</div>
+      <div id="com-alertas"><div class="empty">Consultando a Michelle…</div></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Campañas · leads nuevos por día</div>
+      <div id="com-leads"></div>
+      <div class="hint">Lead = paciente que escribe por primera vez a Michelle. El origen es el primer toque: anuncio de Meta (Click-to-WhatsApp), Google Ads (código de la landing), derivada por recepción u otro. Si una fuente que siempre trae leads amanece en cero, casi siempre es campaña detenida, pago rechazado o saldo agotado.</div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Gasto en publicidad</div>
+      <div id="com-gasto"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Qué trajo a las pacientes que sí se dieron de alta · 30 días</div>
+      <div id="com-altas"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Michelle</div>
+      <div id="com-mich"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Equipo que apoya a Michelle</div>
+      <div id="com-eq"></div>
+    </div>
+    <div class="block">
+      <div class="sec-lab">Auditoría de calidad de las conversaciones</div>
+      <div id="com-aud"></div>
     </div>
   </section>
 
@@ -867,6 +922,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   t.classList.add('on');
   document.getElementById('v-'+t.dataset.view).classList.add('on');
   if(t.dataset.view==='cobros' && !COB.fecha) cobCargar(sumaDia(hoyISO(),1));
+  if(t.dataset.view==='comercial' && !COM.data && !COM.cargando) comCargar();
 });
 
 /* ---- HOY: alertas ---- */
@@ -975,6 +1031,7 @@ function pintar(json){
   document.getElementById('btn-ref').onclick=()=>cargar(true);
   renderDecisiones(); renderAlertas(); renderAnestesia(); renderCaja(); pintaBarras(); renderFotos(); renderExpediente(); renderDinero(); renderAgenda();
   if(!COB.avisado){ COB.avisado=true; cobAviso(); }
+  if(!COM.pedido){ COM.pedido=true; comCargar(); }
   document.getElementById('foot').textContent=`Augusta v${DATA.version} · evaluado ${DATA.generado} · ${DATA.usuario||''}`;
   const br=document.getElementById('btn-revisar'); if(br){ br.textContent='↻ Revisar ahora'; br.title='Revisado por última vez: '+DATA.generado; }
 }
@@ -1058,6 +1115,155 @@ function cobEditar(i){
   };
   document.getElementById('cob-ok').onclick=()=>enviar(false);
   const del=document.getElementById('cob-del'); if(del) del.onclick=()=>enviar(true);
+}
+
+/* =================================================================
+   COMERCIAL — campañas → leads → Michelle → equipo → alta
+   ================================================================= */
+const COM={data:null,cargando:false,pedido:false};
+const AREA={campanas:'Campañas',michelle:'Michelle',equipo:'Equipo',calidad:'Calidad'};
+const RES={atendido:'Atendido',pendiente:'Esperando',devuelto_sin_responder:'Devuelto sin responder',nadie_lo_tomo:'Nadie lo tomó'};
+const RESAUD={cita_agendada:'Cita agendada',apartado_pagado:'Apartado pagado',cotizacion_enviada:'Cotización enviada',en_seguimiento:'En seguimiento',perdida:'Perdida',no_aplica:'No es de venta'};
+const PROB={sin_respuesta:'Sin respuesta',demora:'Demora',dato_dudoso:'Dato dudoso',tono:'Tono',no_cerro:'No cerró',escalo_de_mas:'Escaló de más',seguimiento:'Dejó a medias',otro:'Otro'};
+const hm = iso => iso ? new Date(iso).toLocaleString('es-MX',{timeZone:'America/Mexico_City',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+const dur = s => s==null ? '—' : (s<90 ? Math.round(s)+' s' : (s<5400 ? Math.round(s/60)+' min' : (s/3600).toFixed(1)+' h'));
+const durMin = m => m==null ? '—' : (m<90 ? m+' min' : (m/60).toFixed(1)+' h');
+const quien = e => e ? esc(String(e).split('@')[0]) : '—';
+const pacienteTd = x => `<td class="nm">${esc(x.nombre||'—')}<span class="sm">${esc(x.telefono||'')}</span></td>`;
+
+async function comCargar(){
+  COM.cargando=true;
+  if(!COM.data) document.getElementById('com-alertas').innerHTML='<div class="empty">Consultando a Michelle…</div>';
+  try{ COM.data=await augustaGet({accion:'comercial'}); comPintar(); }
+  catch(e){ document.getElementById('com-alertas').innerHTML='<div class="empty">No se pudo leer a Michelle</div><div class="hint" style="text-align:center">'+esc(e.message)+'</div>'; }
+  finally{ COM.cargando=false; }
+}
+function comAlertas(L){
+  return L.length?L.map(a=>`
+    <div class="al ${a.nivel}">
+      <div><div class="niv">${NIVEL[a.nivel]}</div><div class="hint" style="margin-top:4px">${esc(AREA[a.area]||a.area)}</div></div>
+      <div><div class="t">${esc(a.titulo)}</div><div class="d">${esc(a.detalle)}</div></div>
+      <div class="f"></div>
+    </div>`).join(''):'<div class="hint">Todo en orden: campañas trayendo leads, Michelle contestando y el equipo sin pendientes.</div>';
+}
+function comPintar(){
+  const D=COM.data; if(!D) return;
+  const A=D.alertas||[], rojas=A.filter(a=>a.nivel==='rojo').length;
+  document.getElementById('com-n').textContent=A.length||'';
+  // Aviso en HOY: sólo lo crítico
+  document.getElementById('com-aviso').innerHTML=rojas?`<div class="cob-aviso"><div><b>Comercial:</b> ${A.filter(a=>a.nivel==='rojo').map(a=>esc(a.titulo)).join(' · ')}.</div><button class="btn" onclick="document.querySelector('.tab[data-view=comercial]').click()">Revisar</button></div>`:'';
+  const o=D.origen24||{}, mich=D.michelle||[], ayer=sumaDia(hoyISO(),-1), dA=mich.find(x=>x.dia===ayer)||{}, au=D.auditoria, al=D.altas||{};
+  const prom=+o.total_prom||0, n24=+o.total24||0;
+  const audAyer=au?(au.tendencia||[]).find(t=>t.fecha===au.fecha):null;
+  document.getElementById('com-kpis').innerHTML=
+    `<div class="kpi"><div class="lab">Leads · 24 h</div><div class="val">${n24}<br><small>promedio ${prom.toFixed(1)}/día · Meta ${+o.meta24||0} · Google ${+o.google24||0}</small></div></div>`+
+    `<div class="kpi"><div class="lab">Altas · 30 días</div><div class="val">${al.error?'—':(al.total||0)}<br><small>${al.error?esc(al.error):((al.porMedido||[]).filter(x=>x.k==='meta'||x.k==='google').reduce((s,x)=>s+x.n,0)+' trazadas a un anuncio')}</small></div></div>`+
+    `<div class="kpi"><div class="lab">Michelle · ayer</div><div class="val">${dur(dA.respuesta_mediana_s)}<br><small>respuesta típica · ${dA.conversaciones||0} conversaciones · ${dA.fallos||0} fallos</small></div></div>`+
+    `<div class="kpi"><div class="lab">Calidad · auditoría</div><div class="val">${audAyer?audAyer.promedio+' / 5':'—'}<br><small>${audAyer?audAyer.n+' conversaciones del '+fc(au.fecha)+' · '+audAyer.malas+' mal llevadas':'aún sin auditoría'}</small></div></div>`;
+  document.getElementById('com-alertas').innerHTML=comAlertas(A);
+
+  // Leads por día (14 días) — barras apiladas
+  const L=(D.leads||[]).slice(-14), mx=Math.max(1,...L.map(x=>x.total))*1.15;
+  const ads=(D.anuncios7d||[]);
+  document.getElementById('com-leads').innerHTML=L.length?`
+    <div class="com-bars">${L.map(x=>{const h=v=>(v/mx*100)+'%';return `<div class="com-bar" title="${fc(x.dia)}: ${x.total} leads · Meta ${x.meta} · Google ${x.google} · Recepción ${x.recepcion} · Otros ${x.otros}">
+      <i class="c-meta" style="height:${h(x.meta)}"></i><i class="c-google" style="height:${h(x.google)}"></i><i class="c-rec" style="height:${h(x.recepcion)}"></i><i class="c-otros" style="height:${h(x.otros)}"></i>
+      <span class="tot" style="bottom:calc(${h(x.total)} + 2px)">${x.total}</span></div>`;}).join('')}</div>
+    <div class="com-dias">${L.map(x=>`<span>${fc(x.dia).replace(/ \w+$/,'')}</span>`).join('')}</div>
+    <div class="com-ley"><span><b class="c-meta"></b>Meta</span><span><b class="c-google"></b>Google Ads</span><span><b class="c-rec"></b>Recepción</span><span><b class="c-otros"></b>Otros / sin código</span></div>
+    ${ads.length?`<div class="com-sub">Anuncios que más leads trajeron · 7 días</div><div class="tscroll"><table><thead><tr><th>Anuncio</th><th>Plataforma</th><th class="r">Leads</th></tr></thead><tbody>${ads.map(a=>`<tr><td class="nm">${esc(a.anuncio)}</td><td>${a.tipo==='meta'?'Meta':'Google'}</td><td class="r">${a.leads}</td></tr>`).join('')}</tbody></table></div>`:''}`
+    :'<div class="hint">Sin leads en el periodo.</div>';
+
+  // Gasto en publicidad (Meta desde Michelle, Google desde el script de cada cuenta)
+  document.getElementById('com-gasto').innerHTML=comGasto(D);
+
+  // Altas con origen
+  document.getElementById('com-altas').innerHTML=al.error?`<div class="hint">No se pudo cruzar con AltaPacientes: ${esc(al.error)}</div>`:`
+    <div class="com-2">
+      <div><div class="com-sub" style="margin-top:0">Medido (primer mensaje a Michelle)</div><table><tbody>${(al.porMedido||[]).map(x=>`<tr><td class="nm">${esc(x.canal)}</td><td class="r">${x.n}</td></tr>`).join('')}</tbody></table></div>
+      <div><div class="com-sub" style="margin-top:0">Lo que dijo la paciente («Cómo nos conoció»)</div><table><tbody>${(al.porDeclarado||[]).map(x=>`<tr><td class="nm">${esc(x.canal)}</td><td class="r">${x.n}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+    ${(al.porAnuncio||[]).length?`<div class="com-sub">Anuncios que trajeron altas</div><table><tbody>${al.porAnuncio.map(x=>`<tr><td class="nm">${esc(x.anuncio)}</td><td>${x.tipo==='meta'?'Meta':'Google'}</td><td class="r">${x.n}</td></tr>`).join('')}</tbody></table>`:''}
+    <details class="com-det"><summary>Ver las ${al.total} altas</summary><div class="tscroll"><table><thead><tr><th>Alta</th><th>Paciente</th><th>Estatus</th><th>Medido</th><th>Declarado</th></tr></thead><tbody>
+      ${(al.altas||[]).map(x=>`<tr><td>${fc(x.fecha)}</td><td class="nm">${esc(x.nombre)}${x.anuncio?`<span class="sm">${esc(x.anuncio)}</span>`:''}</td><td>${esc(x.estatus||'—')}</td><td>${esc(x.medido)}</td><td>${esc(x.declarado)}</td></tr>`).join('')}
+    </tbody></table></div></details>
+    <div class="hint">«No escribió a Michelle antes del alta» = llegó por teléfono, referido, en persona o desde otro número; esa parte del negocio no deja rastro de anuncio.</div>`;
+
+  // Michelle
+  const E=D.esperando||{michelle:[],sin_tomar:[],colgados:[]};
+  const M=mich.slice(-10).reverse();
+  document.getElementById('com-mich').innerHTML=`
+    <div class="tscroll"><table><thead><tr><th>Día</th><th class="r">Conversaciones</th><th class="r">Mensajes de pacientes</th><th class="r">Respuesta típica</th><th class="r">9 de 10 en menos de</th><th class="r">Fallos</th><th class="r">Apartados cobrados</th></tr></thead><tbody>
+      ${M.map(x=>`<tr><td>${fc(x.dia)}</td><td class="r">${x.conversaciones}</td><td class="r">${x.msgs_paciente}</td><td class="r">${dur(x.respuesta_mediana_s)}</td><td class="r">${dur(x.respuesta_p90_s)}</td><td class="r">${x.fallos?'<span class="badge b-rojo">'+x.fallos+'</span>':'0'}</td><td class="r">${x.apartados}${x.apartados?'<span class="sm">'+mxn(x.apartados_monto)+'</span>':''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="com-sub">Pacientes con Michelle esperando respuesta</div>
+    ${E.michelle.length?`<div class="tscroll"><table><thead><tr><th>Paciente</th><th>Último mensaje</th><th class="r">Espera</th></tr></thead><tbody>${E.michelle.map(x=>`<tr>${pacienteTd(x)}<td>${esc(x.ultimo)}</td><td class="r">${durMin(x.minutos)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="hint">Ninguna. Michelle ha contestado a todas.</div>'}
+    ${(D.fallos||[]).length?`<div class="com-sub">Fallos de las últimas 48 h</div><div class="tscroll"><table><thead><tr><th>Cuándo</th><th>Paciente</th><th>Motivo</th></tr></thead><tbody>${D.fallos.map(f=>`<tr><td>${hm(f.creado_en)}</td><td class="nm">${esc(f.nombre||f.telefono)}<span class="sm">${esc(f.mensaje||'')}</span></td><td>${esc(f.motivo||'')}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+
+  // Equipo
+  const T=D.atencion||{handoffs:[],porAgente:[],porDia:[]};
+  const desde=T.desde?hm(T.desde):'';
+  document.getElementById('com-eq').innerHTML=`
+    ${(E.sin_tomar.length||E.colgados.length)?`<div class="com-sub" style="margin-top:0">Pendientes ahora</div><div class="tscroll"><table><thead><tr><th>Paciente</th><th>Situación</th><th>Último mensaje</th><th class="r">Espera</th></tr></thead><tbody>
+      ${E.sin_tomar.map(x=>`<tr>${pacienteTd(x)}<td>Michelle escaló (${esc(x.tipo||'humano')}); nadie lo ha tomado</td><td>${esc(x.ultimo)}</td><td class="r">${durMin(x.minutos)}</td></tr>`).join('')}
+      ${E.colgados.map(x=>`<tr>${pacienteTd(x)}<td>Lo tomó ${x.agente?quien(x.agente):'el equipo'}; la paciente espera respuesta</td><td>${esc(x.ultimo)}</td><td class="r">${durMin(x.minutos)}</td></tr>`).join('')}
+    </tbody></table></div>`:'<div class="hint" style="margin-top:0">Sin pacientes esperando al equipo en este momento.</div>'}
+    <div class="com-sub">Por persona</div>
+    ${T.porAgente.length?`<div class="tscroll"><table><thead><tr><th>Quién</th><th class="r">Respuestas</th><th class="r">Conversaciones</th><th class="r">Escalamientos tomados</th><th class="r">Tarda en tomarlos</th><th class="r">Devueltos a Michelle</th></tr></thead><tbody>
+      ${T.porAgente.map(a=>`<tr><td class="nm">${quien(a.agente)}</td><td class="r">${a.respuestas}</td><td class="r">${a.conversaciones}</td><td class="r">${a.handoffs_tomados}</td><td class="r">${durMin(a.primera_respuesta_mediana_min)}</td><td class="r">${a.devueltos}</td></tr>`).join('')}
+    </tbody></table></div>`:`<div class="hint">Todavía sin registros por persona.</div>`}
+    <div class="com-sub">Escalamientos de Michelle</div>
+    ${T.handoffs.length?`<div class="tscroll"><table><thead><tr><th>Cuándo</th><th>Paciente</th><th>Motivo</th><th>Resultado</th><th class="r">Primera respuesta</th></tr></thead><tbody>
+      ${T.handoffs.map(h=>`<tr><td>${hm(h.en)}</td>${pacienteTd(h)}<td>${esc(h.tipo)}</td><td>${h.resultado==='atendido'?'<span class="badge b-ok">Atendido</span><span class="sm">'+quien(h.agente)+'</span>':h.resultado==='pendiente'?'<span class="badge b-ambar">Esperando</span>':'<span class="badge b-rojo">'+esc(RES[h.resultado]||h.resultado)+'</span>'}${h.escalado?'<span class="sm">escalado a '+esc(h.escalado)+'</span>':''}</td><td class="r">${durMin(h.primera_respuesta_min)}</td></tr>`).join('')}
+    </tbody></table></div>`:'<div class="hint">Sin escalamientos registrados todavía.</div>'}
+    <div class="hint">Quién atiende y en cuánto tiempo se registra desde ${desde||'hoy'}; antes la base no lo guardaba. Mensajes del equipo por día (de toda la historia): ${mich.slice(-7).map(x=>fc(x.dia).replace(/ \w+$/,'')+' '+x.msgs_equipo).join(' · ')}.</div>`;
+
+  // Auditoría
+  document.getElementById('com-aud').innerHTML=!au?`<div class="hint" style="margin-top:0">Cada mañana, a partir de las 6:00, Claude lee las conversaciones del día anterior (hasta 30, primero las que tocó el equipo) y califica a Michelle y al equipo del 1 al 5: si contestaron, si tardaron, si el tono fue de «usted», si propusieron la valoración y si algún dato se contradice. La primera corre mañana.</div>
+    <button class="btn sec" style="margin-top:12px" onclick="comAuditar(this)">Auditar ayer ahora</button>`:`
+    <div class="hint" style="margin-top:0">Conversaciones del ${fc(au.fecha)} · ${au.casos.length} revisadas. ${(au.tendencia||[]).length>1?'Promedio por día: '+au.tendencia.map(t=>fc(t.fecha).replace(/ \w+$/,'')+' '+t.promedio).join(' · '):''}</div>
+    ${(au.problemas||[]).length?`<div class="com-sub">Lo que más se repite</div><div>${au.problemas.slice(0,8).map(p=>`<span class="badge ${p.quien==='equipo'?'b-ambar':'b-rojo'}" style="margin:0 6px 6px 0">${p.quien==='equipo'?'Equipo':'Michelle'} · ${esc(PROB[p.tipo]||p.tipo)} · ${p.n}</span>`).join('')}</div>`:''}
+    <div class="com-sub">Conversaciones</div>
+    <div class="tscroll"><table><thead><tr><th>Calif.</th><th>Paciente</th><th>Cómo terminó</th><th>Qué pasó</th></tr></thead><tbody>
+      ${au.casos.map(c=>`<tr><td><span class="cal c${c.calificacion}">${c.calificacion}</span></td>${pacienteTd(c)}<td>${esc(RESAUD[c.resultado]||c.resultado||'—')}${c.intervino_equipo?'<span class="sm">intervino el equipo</span>':''}</td><td>${esc(c.resumen||'')}${(c.problemas||[]).map(p=>`<span class="prob"><b>${p.quien==='equipo'?'Equipo':'Michelle'} · ${esc(PROB[p.tipo]||p.tipo)}:</b> ${esc(p.detalle||'')}${p.cita?' — «'+esc(p.cita)+'»':''}</span>`).join('')}</td></tr>`).join('')}
+    </tbody></table></div>
+    <button class="btn sec" style="margin-top:12px" onclick="comAuditar(this)">Auditar ayer otra vez (sólo las que falten)</button>`;
+  document.getElementById('foot').dataset.com=D.generado||'';
+}
+function comGasto(D){
+  const ayer=sumaDia(hoyISO(),-1), d7=sumaDia(hoyISO(),-7), d30=sumaDia(hoyISO(),-30);
+  const sumD=(cs,desde,hasta)=>cs.reduce((t,c)=>t+(c.dias||[]).filter(x=>x.dia>=desde&&x.dia<=hasta).reduce((u,x)=>u+(+x.gasto||0),0),0);
+  const L=D.leads||[], leads7=k=>L.filter(x=>x.dia>=d7&&x.dia<=ayer).reduce((t,x)=>t+(x[k]||0),0);
+  const al=D.altas||{}, med=k=>((al.porMedido||[]).find(x=>x.k===k)||{}).n||0;
+  const dec=re=>(al.porDeclarado||[]).filter(x=>re.test(x.canal)).reduce((t,x)=>t+x.n,0);
+  const plat=[
+    {nom:'Meta',G:D.gasto_meta,k:'meta',decl:dec(/facebook|instagram/i),nota:'Facebook o Instagram'},
+    {nom:'Google Ads',G:D.gasto_google,k:'google',decl:dec(/google ads/i),nota:'Google Ads'}];
+  const por=(a,b)=>b>0?mxn(a/b):'—';
+  const filas=plat.map(p=>{
+    const G=p.G||{}, cs=(G.cuentas||[]).filter(c=>!c.error);
+    if(!cs.length) return `<tr><td class="nm">${p.nom}</td><td colspan="7"><span class="badge b-ambar">Sin datos</span><span class="sm">${esc(G.error||'Sin respuesta')}</span></td></tr>`;
+    const g1=sumD(cs,ayer,ayer), g7=sumD(cs,d7,ayer), g30=sumD(cs,d30,ayer), pres=cs.reduce((t,c)=>t+(c.presupuesto_diario||0),0), hoy=cs.reduce((t,c)=>t+(c.hoy||0),0);
+    const l7=leads7(p.k), m30=med(p.k);
+    return `<tr><td class="nm">${p.nom}<span class="sm">presupuesto activo ${mxn(pres)}/día · hoy ${mxn(hoy)}</span></td><td class="r">${mxn(g1)}</td><td class="r">${mxn(g7)}</td><td class="r">${mxn(g30)}</td>
+      <td class="r">${l7}<span class="sm">${por(g7,l7)} c/u</span></td>
+      <td class="r">${m30}<span class="sm">${por(g30,m30)} c/u</span></td><td class="r">${p.decl}<span class="sm">${por(g30,p.decl)} c/u</span></td></tr>`;
+  }).join('');
+  const camp=[];
+  ((D.gasto_meta||{}).cuentas||[]).forEach(c=>(c.campanas7d||[]).forEach(x=>camp.push({p:'Meta',n:x.campana,g:x.gasto,r:x.conversaciones,u:'conversaciones'})));
+  ((D.gasto_google||{}).cuentas||[]).forEach(c=>(c.campanas7d||[]).forEach(x=>camp.push({p:'Google',n:x.campana,g:x.gasto,r:Math.round(x.conversiones),u:'conversiones',c:x.clics})));
+  camp.sort((a,b)=>b.g-a.g);
+  const est=((D.gasto_meta||{}).cuentas||[]).filter(c=>!c.error).map(c=>`<span class="badge ${c.estado===1||c.estado===201?'b-ok':'b-rojo'}" style="margin:0 6px 6px 0">Meta · ${esc(c.nombre||c.id)} · ${esc(c.estado_txt)}${c.activos.length?' · '+c.activos.length+' conjuntos activos':''}</span>`)
+    .concat(((D.gasto_google||{}).cuentas||[]).map(c=>`<span class="badge ${c.horas!=null&&c.horas<=26?'b-ok':'b-ambar'}" style="margin:0 6px 6px 0">Google · ${esc(c.nombre||c.id)} · ${c.activas.length} campañas habilitadas · leído hace ${c.horas==null?'—':c.horas+' h'}</span>`)).join('');
+  return `${est?'<div style="margin-bottom:12px">'+est+'</div>':''}
+    <div class="tscroll"><table><thead><tr><th>Plataforma</th><th class="r">Ayer</th><th class="r">7 días</th><th class="r">30 días</th><th class="r">Leads 7 días<span class="sm">costo por lead</span></th><th class="r">Altas medidas 30 d<span class="sm">costo por alta</span></th><th class="r">Altas declaradas 30 d<span class="sm">costo por alta</span></th></tr></thead><tbody>${filas}</tbody></table></div>
+    ${camp.length?`<div class="com-sub">Campañas · últimos 7 días</div><div class="tscroll"><table><thead><tr><th>Campaña</th><th>Plataforma</th><th class="r">Gasto</th><th class="r">Resultados</th><th class="r">Costo c/u</th></tr></thead><tbody>${camp.slice(0,15).map(x=>`<tr><td class="nm">${esc(x.n)}</td><td>${x.p}</td><td class="r">${mxn(x.g)}</td><td class="r">${x.r}<span class="sm">${x.u}${x.c!=null?' · '+x.c+' clics':''}</span></td><td class="r">${x.r?mxn(x.g/x.r):'—'}</td></tr>`).join('')}</tbody></table></div>`:''}
+    <div class="hint">Altas medidas = la paciente escribió a Michelle desde un anuncio antes de darse de alta. Altas declaradas = ella dijo que nos conoció por esa red; incluye a quien vio el anuncio y llegó por otra puerta. La realidad suele estar entre las dos.</div>`;
+}
+async function comAuditar(b){
+  b.disabled=true; b.textContent='Auditando… (unos minutos)';
+  try{ const r=await augustaGet({accion:'comercial_auditar',fecha:sumaDia(hoyISO(),-1)}); toast(r.mensaje||r.error||'Listo'); setTimeout(comCargar,180000); }
+  catch(e){ b.disabled=false; b.textContent='Auditar ayer ahora'; toast(e.message,true); }
 }
 /* Aviso en HOY: cuántas citas de mañana no tienen monto definido. */
 async function cobAviso(){
