@@ -237,6 +237,8 @@
   .prob{display:block;font-size:12px;color:var(--ink-soft);margin-top:3px}
   .prob b{font-weight:500;color:var(--negro)}
   th .sm{display:block;font-size:10px;letter-spacing:.5px;text-transform:none;font-weight:300;margin-top:2px}
+  .iny-ok{color:var(--campeon)}.iny-rojo{color:var(--riesgo);font-weight:500}.iny-ambar{color:var(--dormido);font-weight:500}.iny-info{color:var(--nuevo)}
+  tr.iny-r-rojo td{background:rgba(154,91,46,.07)}tr.iny-r-ambar td{background:rgba(161,148,135,.08)}
   details.com-det summary{cursor:pointer;font-size:12px;letter-spacing:.5px;color:var(--ink-soft);margin-top:12px}
   .cob-aviso{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-left:3px solid var(--dormido);background:var(--paper);padding:14px 18px;margin-bottom:22px;font-size:13.5px}
 </style>
@@ -273,6 +275,7 @@
     <button class="tab" data-view="dinero">Dinero</button>
     <button class="tab" data-view="agenda">Agenda</button>
     <button class="tab" data-view="cobros">Cobros<span class="n" id="cob-n"></span></button>
+    <button class="tab" data-view="inyectables">Inyectables<span class="n" id="iny-n"></span></button>
     <button class="tab" data-view="comercial">Comercial<span class="n" id="com-n"></span></button>
     <button class="btn-ref" id="btn-revisar" style="margin-left:auto;align-self:center" onclick="revisarAhora()" title="Augusta vuelve a revisar todas las fuentes en este momento">↻ Revisar ahora</button>
   </div>
@@ -452,6 +455,26 @@
     </div>
   </section>
 
+  <!-- INYECTABLES -->
+  <section class="view" id="v-inyectables">
+    <div class="block">
+      <div class="sec-lab">Inyectables · agenda, salida del almacén y cobro</div>
+      <div class="cob-bar">
+        <button class="btn sec" onclick="inyMover(-1)" aria-label="Día anterior">‹</button>
+        <input type="date" class="sel" id="iny-fecha" onchange="inyCargar(this.value)">
+        <button class="btn sec" onclick="inyMover(1)" aria-label="Día siguiente">›</button>
+        <button class="btn sec" onclick="inyCargar(hoyISO())">Hoy</button>
+        <button class="btn sec" onclick="inyCargar(sumaDia(hoyISO(),-1))">Ayer</button>
+        <button class="btn sec" onclick="inyCargar(INY.fecha,true)">↻ Actualizar</button>
+      </div>
+      <div class="kpis" id="iny-kpis"></div>
+      <div class="tscroll"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Agenda</th><th>Salida del almacén</th><th>Cobro</th><th>Estado</th></tr></thead><tbody id="t-iny"><tr><td colspan="6" class="hint">Elija un día.</td></tr></tbody></table></div>
+      <div class="com-sub">Producto que salió del almacén</div>
+      <div id="iny-prod"></div>
+      <div class="hint">Cruza, por paciente, la cita de las cabinas (o de consulta y quirófano si el tratamiento es inyectable), la aplicación registrada en el almacén (APL-…) y el cobro del Registro Sellado o su paquete prepagado. «Sin cobro» = salió producto y no hay cobro ese día ni paquete con inyectables. Cada noche a las 20:30 Augusta le manda este mismo reporte por correo.</div>
+    </div>
+  </section>
+
   <!-- COMERCIAL -->
   <section class="view" id="v-comercial">
     <div class="kpis" id="com-kpis"></div>
@@ -523,7 +546,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const DIA=['dom','lun','mar','mié','jue','vie','sáb'];
 const fc = k => { if(!k) return '—'; const [y,m,d]=k.split('-').map(Number); const dt=new Date(y,m-1,d); return DIA[dt.getDay()]+' '+d+' '+MES[m-1]; };
 const NIVEL={rojo:'Crítico',ambar:'Revisar',info:'Para el día'};
-const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente',cirugias:'Cirugías',cotizaciones:'Cotizaciones',almacen:'Almacén'};
+const MOD={dinero:'Dinero',agenda:'Agenda',sistema:'Sistema',anestesia:'Anestesia',caja:'Caja Zorvix',fotos:'Fotos',expediente:'Expediente',cirugias:'Cirugías',cotizaciones:'Cotizaciones',almacen:'Almacén',inyectables:'Inyectables'};
 // App de honorarios de anestesia: mismo cliente de Google que Augusta, así que acepta la misma sesión.
 // Las aprobaciones se registran EN esa app (con su bitácora); Augusta sólo presta el botón.
 const ANE_API = "https://script.google.com/macros/s/AKfycbyQzreXfVYijommhkd4mdnejSD_j5qr-ZT2fk5Ud9TEZhbkhcmgxM5xJip80vDCXy30Zg/exec";
@@ -923,6 +946,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.getElementById('v-'+t.dataset.view).classList.add('on');
   if(t.dataset.view==='cobros' && !COB.fecha) cobCargar(sumaDia(hoyISO(),1));
   if(t.dataset.view==='comercial' && !COM.data && !COM.cargando) comCargar();
+  if(t.dataset.view==='inyectables' && !INY.fecha) inyCargar(hoyISO());
 });
 
 /* ---- HOY: alertas ---- */
@@ -1264,6 +1288,50 @@ async function comAuditar(b){
   b.disabled=true; b.textContent='Auditando… (unos minutos)';
   try{ const r=await augustaGet({accion:'comercial_auditar',fecha:sumaDia(hoyISO(),-1)}); toast(r.mensaje||r.error||'Listo'); setTimeout(comCargar,180000); }
   catch(e){ b.disabled=false; b.textContent='Auditar ayer ahora'; toast(e.message,true); }
+}
+
+/* =================================================================
+   INYECTABLES — agenda ↔ salida del almacén ↔ cobro, por día
+   ================================================================= */
+const INY={fecha:'',data:null};
+const INY_EST={ok:['Cuadra','iny-ok'],sin_cita:['Cuadra · sin cita','iny-info'],sin_cobro:['Sin cobro','iny-rojo'],cobro_sin_salida:['Cobro sin salida','iny-ambar'],
+  cita_sin_salida:['Sin salida ni cobro','iny-ambar'],pendiente:['Pendiente','iny-info'],con_cirugia:['Con cobro de cirugía','iny-ambar']};
+function inyMover(n){ inyCargar(sumaDia(INY.fecha||hoyISO(),n)); }
+async function inyCargar(f,refrescar){
+  if(!f) return;
+  INY.fecha=f; document.getElementById('iny-fecha').value=f;
+  document.getElementById('t-iny').innerHTML='<tr><td colspan="6" class="hint">Cruzando agenda, almacén y cobros de '+fc(f)+'… (unos 20 s)</td></tr>';
+  document.getElementById('iny-kpis').innerHTML=''; document.getElementById('iny-prod').innerHTML='';
+  try{
+    const q={accion:'inyectables',dia:f}; if(refrescar) q.refrescar='1';
+    const r=await augustaGet(q);
+    if(INY.fecha!==f) return;
+    INY.data=r; inyPintar();
+  }catch(e){ if(INY.fecha===f) document.getElementById('t-iny').innerHTML='<tr><td colspan="6" class="hint">No se pudo armar el reporte: '+esc(e.message)+'</td></tr>'; }
+}
+function inyPintar(){
+  const r=INY.data, s=r.resumen||{};
+  const inc=(s.sinCobro||0)+(s.cobroSinSalida||0)+(s.citaSinSalida||0)+(s.conCirugia||0);
+  if(INY.fecha===sumaDia(hoyISO(),-1)||INY.fecha===hoyISO()) document.getElementById('iny-n').textContent=inc||'';
+  document.getElementById('iny-kpis').innerHTML=
+    `<div class="kpi"><div class="lab">Pacientes</div><div class="val">${s.pacientes||0}<br><small>${s.aplicaciones||0} aplicaciones en el almacén</small></div></div>`+
+    `<div class="kpi"><div class="lab">Cuadran</div><div class="val">${s.cuadran||0}<br><small>${s.sinCita?s.sinCita+' sin cita en agenda':'cita, salida y cobro'}</small></div></div>`+
+    `<div class="kpi"><div class="lab">Sin cobro</div><div class="val" style="${s.sinCobro?'color:var(--riesgo)':''}">${s.sinCobro||0}<br><small>salió producto, no hay cobro</small></div></div>`+
+    `<div class="kpi"><div class="lab">Por revisar</div><div class="val">${(s.cobroSinSalida||0)+(s.citaSinSalida||0)+(s.conCirugia||0)}<br><small>${s.conCirugia?s.conCirugia+' con cobro de cirugía · ':''}${s.cobroSinSalida||0} cobros sin salida · ${s.citaSinSalida||0} citas sin salida · cobrado ${mxn(s.cobrado)}</small></div></div>`;
+  const F=r.filas||[];
+  document.getElementById('t-iny').innerHTML=F.length?F.map(f=>{
+    const e=INY_EST[f.estado]||[f.estado,''];
+    const ag=f.citas.length?f.citas.map(c=>`${esc(c.donde)} · ${esc(c.hora)}<span class="sm">${esc(c.tratamiento||'')}${c.asistencia?' · asistió: '+esc(c.asistencia):' · asistencia sin marcar'}</span>`).join('<br>'):'<span class="sm">No está en la agenda</span>';
+    const al=f.apls.length?f.apls.map(a=>`${esc(a.folio)} · ${esc(a.hora)}${a.entorno?' · '+esc(a.entorno):''}<span class="sm">${a.items.map(i=>esc(i.nombre)+' <b>'+i.cantidad+(i.unidad?' '+esc(i.unidad):'')+'</b>').join('<br>')}${a.usuario?'<br>registró '+esc(a.usuario):''}</span>`).join('<br>'):'<span class="sm">Sin salida registrada</span>';
+    const co=f.cobros.length?f.cobros.map(c=>`${esc(c.folio)} · ${mxn(c.monto)}<span class="sm">${esc(c.tratamiento)} · ${esc(c.cuenta||c.metodo||'')}</span>`).join('<br>'):
+      (f.paquete?`Paquete ${esc(f.paquete.folio)}<span class="sm">${esc(f.paquete.tratamiento)} · pagado el ${fc(f.paquete.dia)}</span>`:
+      f.cirugia?`Cirugía ${esc(f.cirugia.folio)} · ${mxn(f.cirugia.monto)}<span class="sm">${esc(f.cirugia.tratamiento)} · ${fc(f.cirugia.dia)}</span>`:'<span class="sm">Sin cobro</span>');
+    const cls=f.nivel==='rojo'?'iny-r-rojo':f.nivel==='ambar'?'iny-r-ambar':'';
+    return `<tr class="${cls}"><td>${esc(f.hora||'—')}</td><td class="nm">${esc(f.paciente)}</td><td>${ag}</td><td>${al}</td><td>${co}</td><td><span class="${e[1]}">${e[0]}</span><span class="sm">${esc(f.texto)}</span></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="hint">Sin inyectables ese día: ni citas de inyectables, ni salidas del almacén, ni cobros.</td></tr>';
+  const P=r.productos||[];
+  document.getElementById('iny-prod').innerHTML=(P.length?`<div class="tscroll"><table><thead><tr><th>Clave</th><th>Producto</th><th class="r">Cantidad</th><th class="r">Aplicaciones</th></tr></thead><tbody>${P.map(x=>`<tr><td>${esc(x.sku)}</td><td class="nm">${esc(x.nombre)}</td><td class="r">${x.cantidad} ${esc(x.unidad||'')}</td><td class="r">${x.aplicaciones}</td></tr>`).join('')}</tbody></table></div>`:'<div class="hint">No salió producto ese día.</div>')+
+    ((r.errores||[]).length?`<div class="hint" style="color:var(--riesgo)">Ojo: ${esc(r.errores.join(' · '))}</div>`:'')+`<div class="hint">Generado ${esc(r.generado||'')}</div>`;
 }
 /* Aviso en HOY: cuántas citas de mañana no tienen monto definido. */
 async function cobAviso(){
