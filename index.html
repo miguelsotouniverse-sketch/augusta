@@ -471,7 +471,7 @@
       <div class="tscroll"><table><thead><tr><th>Hora</th><th>Paciente</th><th>Agenda</th><th>Salida del almacén</th><th>Cobro</th><th>Estado</th></tr></thead><tbody id="t-iny"><tr><td colspan="6" class="hint">Elija un día.</td></tr></tbody></table></div>
       <div class="com-sub">Producto que salió del almacén</div>
       <div id="iny-prod"></div>
-      <div class="hint">Cruza, por paciente, la cita de las cabinas (o de consulta y quirófano si el tratamiento es inyectable), la aplicación registrada en el almacén (APL-…) y el cobro del Registro Sellado o su paquete prepagado. «Sin cobro» = salió producto y no hay cobro ese día ni paquete con inyectables. Cada noche a las 20:30 Augusta le manda este mismo reporte por correo.</div>
+      <div class="hint">Cruza, por paciente, la cita de las cabinas (o de consulta y quirófano si el tratamiento es inyectable), la aplicación registrada en el almacén (APL-…) y el cobro del Registro Sellado o su paquete prepagado. «Sin cobro» = salió producto y no hay cobro ese día, ni un pago anticipado de inyectables pendiente de aplicar (p. ej. Buen Fin por link de pago), ni paquete con inyectables. Cada noche a las 20:30 Augusta le manda este mismo reporte por correo.</div>
     </div>
   </section>
 
@@ -1324,7 +1324,8 @@ function inyPintar(){
     const ag=f.citas.length?f.citas.map(c=>`${esc(c.donde)} · ${esc(c.hora)}<span class="sm">${esc(c.tratamiento||'')}${c.asistencia?' · asistió: '+esc(c.asistencia):' · asistencia sin marcar'}</span>`).join('<br>'):'<span class="sm">No está en la agenda</span>';
     const al=f.apls.length?f.apls.map(a=>`${esc(a.folio)} · ${esc(a.hora)}${a.entorno?' · '+esc(a.entorno):''}<span class="sm">${a.items.map(i=>esc(i.nombre)+' <b>'+i.cantidad+(i.unidad?' '+esc(i.unidad):'')+'</b>').join('<br>')}${a.usuario?'<br>registró '+esc(a.usuario):''}</span>`).join('<br>'):'<span class="sm">Sin salida registrada</span>';
     const co=f.cobros.length?f.cobros.map(c=>`${esc(c.folio)} · ${mxn(c.monto)}<span class="sm">${esc(c.tratamiento)} · ${esc(c.cuenta||c.metodo||'')}</span>`).join('<br>'):
-      (f.paquete?`Paquete ${esc(f.paquete.folio)}<span class="sm">${esc(f.paquete.tratamiento)} · pagado el ${fc(f.paquete.dia)}</span>`:
+      (f.anticipo?`Pagado antes ${esc(f.anticipo.folio)} · ${mxn(f.anticipo.monto)}<span class="sm">${esc(f.anticipo.tratamiento)} · pagado el ${fc(f.anticipo.dia)}</span>`:
+      f.paquete?`Paquete ${esc(f.paquete.folio)}<span class="sm">${esc(f.paquete.tratamiento)} · pagado el ${fc(f.paquete.dia)}</span>`:
       f.cirugia?`Cirugía ${esc(f.cirugia.folio)} · ${mxn(f.cirugia.monto)}<span class="sm">${esc(f.cirugia.tratamiento)} · ${fc(f.cirugia.dia)}</span>`:'<span class="sm">Sin cobro</span>');
     const cls=f.nivel==='rojo'?'iny-r-rojo':f.nivel==='ambar'?'iny-r-ambar':'';
     return `<tr class="${cls}"><td>${esc(f.hora||'—')}</td><td class="nm">${esc(f.paciente)}</td><td>${ag}</td><td>${al}</td><td>${co}</td><td><span class="${e[1]}">${e[0]}</span><span class="sm">${esc(f.texto)}</span></td></tr>`;
