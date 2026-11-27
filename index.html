@@ -1322,9 +1322,10 @@ function inyPintar(){
   document.getElementById('t-iny').innerHTML=F.length?F.map(f=>{
     const e=INY_EST[f.estado]||[f.estado,''];
     const ag=f.citas.length?f.citas.map(c=>`${esc(c.donde)} · ${esc(c.hora)}<span class="sm">${esc(c.tratamiento||'')}${c.asistencia?' · asistió: '+esc(c.asistencia):' · asistencia sin marcar'}</span>`).join('<br>'):'<span class="sm">No está en la agenda</span>';
-    const al=f.apls.length?f.apls.map(a=>`${esc(a.folio)} · ${esc(a.hora)}${a.entorno?' · '+esc(a.entorno):''}<span class="sm">${a.items.map(i=>esc(i.nombre)+' <b>'+i.cantidad+(i.unidad?' '+esc(i.unidad):'')+'</b>').join('<br>')}${a.usuario?'<br>registró '+esc(a.usuario):''}</span>`).join('<br>'):'<span class="sm">Sin salida registrada</span>';
+    const al=f.apls.length?f.apls.map(a=>`${esc(a.folio)} · ${esc(a.hora)}${a.entorno?' · '+esc(a.entorno):''}<span class="sm">${a.items.map(i=>esc(i.nombre)+' <b>'+i.cantidad+(i.unidad?' '+esc(i.unidad):'')+'</b>').join('<br>')}${a.usuario?'<br>registró '+esc(a.usuario):''}</span>`).join('<br>'):(f.aplAntes?`Aplicación del ${fc(f.aplAntes.dia)}<span class="sm">${esc(f.aplAntes.folio)}</span>`:'<span class="sm">Sin salida registrada</span>');
     const co=f.cobros.length?f.cobros.map(c=>`${esc(c.folio)} · ${mxn(c.monto)}<span class="sm">${esc(c.tratamiento)} · ${esc(c.cuenta||c.metodo||'')}</span>`).join('<br>'):
-      (f.anticipo?`Pagado antes ${esc(f.anticipo.folio)} · ${mxn(f.anticipo.monto)}<span class="sm">${esc(f.anticipo.tratamiento)} · pagado el ${fc(f.anticipo.dia)}</span>`:
+      (f.cobroDespues?`Cobrado después ${esc(f.cobroDespues.folio)} · ${mxn(f.cobroDespues.monto)}<span class="sm">${esc(f.cobroDespues.tratamiento)} · cobrado el ${fc(f.cobroDespues.dia)}</span>`:
+      f.anticipo?`Pagado antes ${esc(f.anticipo.folio)} · ${mxn(f.anticipo.monto)}<span class="sm">${esc(f.anticipo.tratamiento)} · pagado el ${fc(f.anticipo.dia)}</span>`:
       f.paquete?`Paquete ${esc(f.paquete.folio)}<span class="sm">${esc(f.paquete.tratamiento)} · pagado el ${fc(f.paquete.dia)}</span>`:
       f.cirugia?`Cirugía ${esc(f.cirugia.folio)} · ${mxn(f.cirugia.monto)}<span class="sm">${esc(f.cirugia.tratamiento)} · ${fc(f.cirugia.dia)}</span>`:'<span class="sm">Sin cobro</span>');
     const cls=f.nivel==='rojo'?'iny-r-rojo':f.nivel==='ambar'?'iny-r-ambar':'';
